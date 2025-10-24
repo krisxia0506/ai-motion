@@ -33,3 +33,46 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
 }
+
+export interface Character {
+  id: string;
+  novelId: string;
+  name: string;
+  type: 'main' | 'supporting' | 'minor';
+  appearance: string;
+  personality: string;
+  referenceImages?: ReferenceImage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReferenceImage {
+  id: string;
+  characterId: string;
+  url: string;
+  status: 'generating' | 'completed' | 'failed';
+  prompt?: string;
+  style?: string;
+  createdAt: string;
+}
+
+export interface CreateCharacterRequest {
+  novelId: string;
+  name: string;
+  type: 'main' | 'supporting' | 'minor';
+  appearance: string;
+  personality: string;
+}
+
+export interface UpdateCharacterRequest {
+  name?: string;
+  type?: 'main' | 'supporting' | 'minor';
+  appearance?: string;
+  personality?: string;
+}
+
+export interface GenerateReferenceImageRequest {
+  characterId: string;
+  style?: 'anime' | 'realistic' | 'cartoon' | 'semi-realistic';
+  customPrompt?: string;
+}
