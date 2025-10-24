@@ -134,6 +134,12 @@
   font-size: var(--font-size-sm);
 }
 
+.footer-credit {
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
 @media (min-width: 768px) {
   .header-nav {
     display: flex;
