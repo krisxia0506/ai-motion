@@ -4,13 +4,13 @@ import "time"
 
 // Novel 小说模型
 type Novel struct {
-	ID          string    `json:"id" db:"id"`
-	Title       string    `json:"title" db:"title"`
-	Author      string    `json:"author" db:"author"`
-	Content     string    `json:"content" db:"content"`
-	Status      string    `json:"status" db:"status"` // pending, parsing, completed, failed
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	ID        string    `json:"id" db:"id"`
+	Title     string    `json:"title" db:"title"`
+	Author    string    `json:"author" db:"author"`
+	Content   string    `json:"content" db:"content"`
+	Status    string    `json:"status" db:"status"` // pending, parsing, completed, failed
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // Chapter 章节模型
