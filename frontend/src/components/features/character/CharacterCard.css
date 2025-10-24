@@ -1,0 +1,106 @@
+.character-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.character-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.character-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-primary);
+}
+
+.character-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+}
+
+.character-card-info {
+  flex: 1;
+}
+
+.character-name {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  color: var(--color-text);
+}
+
+.character-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.character-type-main {
+  background-color: #ffd700;
+  color: #000;
+}
+
+.character-type-supporting {
+  background-color: #87ceeb;
+  color: #000;
+}
+
+.character-type-minor {
+  background-color: #d3d3d3;
+  color: #333;
+}
+
+.character-description {
+  margin-bottom: 1rem;
+}
+
+.character-field {
+  margin-bottom: 0.75rem;
+}
+
+.character-field strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.character-field p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.character-stats {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.character-stat {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.character-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
