@@ -1,0 +1,29 @@
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app
+
+# 安装依赖
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+# 复制源码
+COPY backend/ .
+
+# 编译
+RUN CGO_ENABLED=0 GOOS=linux go build -o main cmd/main.go
+
+# 运行阶段
+FROM alpine:latest
+
+WORKDIR /app
+
+# 复制编译好的二进制文件
+COPY --from=builder /app/main .
+COPY --from=builder /app/config ./config
+
+# 安装 ca-certificates 用于 HTTPS 请求
+RUN apk --no-cache add ca-certificates
+
+EXPOSE 8080
+
+CMD ["./main"]

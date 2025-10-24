@@ -1,0 +1,41 @@
+services:
+  # Go 后端服务
+  backend:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.backend
+    container_name: ai-motion-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # 数据库配置 - 使用线上 MySQL
+      - DATABASE_HOST=${DATABASE_HOST:-your-mysql-host}
+      - DATABASE_PORT=${DATABASE_PORT:-3306}
+      - DATABASE_USER=${DATABASE_USER:-ai_motion}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-your-password}
+      - DATABASE_NAME=${DATABASE_NAME:-ai_motion}
+    volumes:
+      - ./storage:/app/storage
+    networks:
+      - ai-motion-network
+    restart: unless-stopped
+
+  # 前端服务
+  frontend:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.frontend
+    container_name: ai-motion-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    depends_on:
+      - backend
+    networks:
+      - ai-motion-network
+    restart: unless-stopped
+
+networks:
+  ai-motion-network:
+    driver: bridge

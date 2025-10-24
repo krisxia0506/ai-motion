@@ -1,0 +1,72 @@
+server:
+  port: 8080
+  mode: debug  # debug, release
+
+database:
+  type: mysql  # mysql, mongodb
+  host: localhost
+  port: 3306
+  username: ai_motion
+  password: ai_motion
+  name: ai_motion
+  charset: utf8mb4
+  parse_time: true
+  loc: Local
+
+storage:
+  type: local  # local, s3, oss
+  local_path: ./storage
+  # s3:
+  #   bucket: ai-motion
+  #   region: us-east-1
+  #   access_key: your-access-key
+  #   secret_key: your-secret-key
+
+ai:
+  # 图像生成配置
+  image:
+    provider: stability  # stability, openai, local
+    model: stable-diffusion-xl
+    width: 1024
+    height: 768
+    steps: 30
+
+  # 文本处理配置
+  text:
+    provider: openai  # openai, anthropic
+    model: gpt-4
+    max_tokens: 4000
+
+  # 语音合成配置
+  tts:
+    provider: elevenlabs  # elevenlabs, openai, azure
+    model: eleven_multilingual_v2
+
+  # API 密钥
+  api_keys:
+    openai: your-openai-api-key
+    anthropic: your-anthropic-api-key
+    stability: your-stability-api-key
+    elevenlabs: your-elevenlabs-api-key
+
+# 日志配置
+logging:
+  level: info  # debug, info, warn, error
+  format: json  # json, text
+  output: stdout  # stdout, file
+  file_path: ./logs/app.log
+
+# CORS 配置
+cors:
+  allowed_origins:
+    - http://localhost:3000
+    - http://localhost:5173
+  allowed_methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+  allowed_headers:
+    - Content-Type
+    - Authorization
+  max_age: 3600

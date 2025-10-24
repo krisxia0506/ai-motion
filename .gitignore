@@ -1,0 +1,52 @@
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 后端 Go
+backend/config/config.yaml
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# 前端
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# 日志
+*.log
+logs/
+
+# 存储
+storage/
+uploads/
+temp/
+
+# 数据库
+*.db
+*.sqlite
+
+# AI 模型
+*.ckpt
+*.safetensors
+*.pth
+models/
+
+# 依赖
+go.sum
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
