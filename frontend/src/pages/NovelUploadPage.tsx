@@ -1,20 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NovelList } from '../components/features/novel';
+import { NovelUpload } from '../components/features/novel';
 import type { Novel } from '../types';
 
-const NovelListPage: React.FC = () => {
+const NovelUploadPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleNovelSelect = (novel: Novel) => {
+  const handleUploadSuccess = (novel: Novel) => {
     navigate(`/novels/${novel.id}`);
   };
 
   return (
     <div className="page-container">
-      <NovelList onNovelSelect={handleNovelSelect} />
+      <NovelUpload onUploadSuccess={handleUploadSuccess} />
     </div>
   );
 };
 
-export default NovelListPage;
+export default NovelUploadPage;
