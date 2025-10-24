@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { MdMenu, MdClose, MdHome, MdLibraryBooks, MdPerson, MdMovie, MdFileDownload } from 'react-icons/md';
+import { FloatingAvatar } from './common/FloatingAvatar';
 import './Layout.css';
 
 export const Layout: React.FC = () => {
@@ -80,8 +81,15 @@ export const Layout: React.FC = () => {
       <footer className="layout-footer">
         <div className="container">
           <p>&copy; {new Date().getFullYear()} AI-Motion. 智能动漫生成系统</p>
+          <p className="footer-credit">页面由 xgopilot 设计和开发</p>
         </div>
       </footer>
+
+      <FloatingAvatar
+        name="xgopilot"
+        avatarUrl="https://github.com/xgopilot.png"
+        profileUrl="https://github.com/xgopilot"
+      />
     </div>
   );
 };
