@@ -2,13 +2,13 @@ package ai
 
 // ImageGenerateRequest 图像生成请求
 type ImageGenerateRequest struct {
-	Prompt           string   `json:"prompt"`
-	NegativePrompt   string   `json:"negative_prompt,omitempty"`
-	Width            int      `json:"width"`
-	Height           int      `json:"height"`
-	Steps            int      `json:"steps"`
-	CharacterLoRA    string   `json:"character_lora,omitempty"`    // 角色 LoRA 模型路径
-	ReferenceImages  []string `json:"reference_images,omitempty"`  // 参考图片
+	Prompt          string   `json:"prompt"`
+	NegativePrompt  string   `json:"negative_prompt,omitempty"`
+	Width           int      `json:"width"`
+	Height          int      `json:"height"`
+	Steps           int      `json:"steps"`
+	CharacterLoRA   string   `json:"character_lora,omitempty"`   // 角色 LoRA 模型路径
+	ReferenceImages []string `json:"reference_images,omitempty"` // 参考图片
 }
 
 // ImageGenerateResponse 图像生成响应
@@ -20,7 +20,7 @@ type ImageGenerateResponse struct {
 // TextAnalyzeRequest 文本分析请求
 type TextAnalyzeRequest struct {
 	Text    string `json:"text"`
-	Type    string `json:"type"`    // character, scene, dialogue
+	Type    string `json:"type"` // character, scene, dialogue
 	Context string `json:"context,omitempty"`
 }
 
