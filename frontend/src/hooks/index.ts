@@ -5,3 +5,4 @@ export { useScenes } from './useScenes';
 export { useGeneration } from './useGeneration';
 export { useDebounce } from './useDebounce';
 export { useLocalStorage } from './useLocalStorage';
+export { useWebSocket, useWebSocketEvent } from './useWebSocket';
