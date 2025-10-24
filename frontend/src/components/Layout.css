@@ -140,6 +140,18 @@
   color: var(--color-text-muted);
 }
 
+.footer-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: opacity var(--transition-fast);
+}
+
+.footer-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
 @media (min-width: 768px) {
   .header-nav {
     display: flex;

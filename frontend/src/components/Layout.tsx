@@ -81,7 +81,18 @@ export const Layout: React.FC = () => {
       <footer className="layout-footer">
         <div className="container">
           <p>&copy; {new Date().getFullYear()} AI-Motion. 智能动漫生成系统</p>
-          <p className="footer-credit">页面由 xgopilot 设计和开发</p>
+          <p className="footer-credit">
+            页面由{' '}
+            <a 
+              href="https://github.com/xgopilot" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="footer-link"
+            >
+              xgopilot
+            </a>
+            {' '}设计和开发
+          </p>
         </div>
       </footer>
 
