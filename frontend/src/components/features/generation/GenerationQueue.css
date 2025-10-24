@@ -1,0 +1,158 @@
+.generation-queue {
+  margin-top: 1.5rem;
+}
+
+.queue-stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.queue-stat {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.queue-stat strong {
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.queue-stat.error strong {
+  color: var(--color-danger);
+}
+
+.queue-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-secondary);
+}
+
+.queue-empty p {
+  margin: 0.5rem 0;
+}
+
+.queue-empty-hint {
+  font-size: 0.875rem;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--color-bg);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.task-item.completed {
+  background: #f0fff4;
+  border-color: #28a745;
+}
+
+.task-item.failed {
+  background: #fff5f5;
+  border-color: #dc3545;
+}
+
+.task-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.task-type-badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 0.25rem 0.75rem;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.task-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.task-progress {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  min-width: 40px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.task-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-danger);
+  flex: 1;
+}
+
+.view-result-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.view-result-link:hover {
+  text-decoration: underline;
+}
+
+.queue-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .task-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-progress {
+    width: 100%;
+  }
+
+  .queue-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
