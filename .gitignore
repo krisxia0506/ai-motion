@@ -47,6 +47,5 @@ models/
 
 # 依赖
 go.sum
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
