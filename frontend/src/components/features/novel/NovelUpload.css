@@ -1,0 +1,187 @@
+.novel-upload {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.novel-upload-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--text-primary, #1f2937);
+  margin-bottom: 2rem;
+}
+
+.novel-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.novel-upload-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+  margin-bottom: 0.5rem;
+}
+
+.novel-upload-required {
+  color: var(--color-danger, #ef4444);
+}
+
+.novel-upload-file-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.novel-upload-dropzone {
+  border: 2px dashed var(--border-color, #d1d5db);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+  background-color: var(--bg-secondary, #f9fafb);
+}
+
+.novel-upload-dropzone:hover {
+  border-color: var(--color-primary, #3b82f6);
+  background-color: var(--bg-primary, #ffffff);
+}
+
+.novel-upload-dropzone-dragging {
+  border-color: var(--color-primary, #3b82f6);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.novel-upload-dropzone-has-file {
+  background-color: var(--bg-primary, #ffffff);
+  border-color: var(--color-success, #10b981);
+}
+
+.novel-upload-file-input {
+  display: none;
+}
+
+.novel-upload-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.novel-upload-upload-icon {
+  color: var(--color-primary, #3b82f6);
+}
+
+.novel-upload-dropzone-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+  margin: 0;
+}
+
+.novel-upload-dropzone-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0;
+}
+
+.novel-upload-file-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--bg-primary, #ffffff);
+  border-radius: 0.375rem;
+}
+
+.novel-upload-file-icon {
+  color: var(--color-success, #10b981);
+  flex-shrink: 0;
+}
+
+.novel-upload-file-details {
+  flex: 1;
+  text-align: left;
+}
+
+.novel-upload-file-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+  margin: 0 0 0.25rem 0;
+}
+
+.novel-upload-file-size {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0;
+}
+
+.novel-upload-file-remove {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: var(--color-danger, #ef4444);
+  border: 1px solid var(--color-danger, #ef4444);
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.novel-upload-file-remove:hover:not(:disabled) {
+  background-color: var(--color-danger, #ef4444);
+  color: white;
+}
+
+.novel-upload-file-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.novel-upload-textarea-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.novel-upload-textarea {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-family: 'Courier New', monospace;
+  color: var(--text-primary, #1f2937);
+  background-color: var(--bg-primary, #ffffff);
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.novel-upload-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.novel-upload-textarea:disabled {
+  background-color: var(--bg-disabled, #f3f4f6);
+  cursor: not-allowed;
+}
+
+.novel-upload-error {
+  padding: 0.75rem 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-danger, #ef4444);
+  border-radius: 0.375rem;
+  color: var(--color-danger, #ef4444);
+  font-size: 0.875rem;
+}
+
+.novel-upload-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
