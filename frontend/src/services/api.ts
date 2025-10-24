@@ -1,6 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
@@ -63,14 +63,14 @@ class ApiClient {
   }
 
   // 生成相关 API
-  async generateScene(sceneData: any): Promise<ApiResponse> {
+  async generateScene(sceneData: Record<string, unknown>): Promise<ApiResponse> {
     return this.request('/api/v1/generate/scene', {
       method: 'POST',
       body: JSON.stringify(sceneData),
     });
   }
 
-  async generateVoice(voiceData: any): Promise<ApiResponse> {
+  async generateVoice(voiceData: Record<string, unknown>): Promise<ApiResponse> {
     return this.request('/api/v1/generate/voice', {
       method: 'POST',
       body: JSON.stringify(voiceData),
