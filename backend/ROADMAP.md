@@ -6,7 +6,7 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 **当前版本:** v0.1.0-alpha
 **目标版本:** v1.0.0
-**最后更新:** 2025-10-25
+**最后更新:** 2025-10-25 (本次 PR 更新)
 
 ---
 
@@ -156,7 +156,7 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ---
 
-### 2.2 Character 领域 ❌
+### 2.2 Character 领域 ✅
 
 #### 实体和值对象
 
@@ -193,7 +193,7 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ---
 
-### 2.3 Scene 领域 ❌
+### 2.3 Scene 领域 ✅
 
 #### 实体和值对象
 
@@ -343,7 +343,7 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ---
 
-### 4.2 Character Application Service ❌
+### 4.2 Character Application Service ✅
 
 - [ ] Character Service
   - [ ] `internal/application/service/character_service.go`
@@ -411,7 +411,7 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ---
 
-### 5.2 Middleware ❌
+### 5.2 Middleware ✅
 
 - [ ] CORS Middleware
 - [ ] Logger Middleware
@@ -498,15 +498,15 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 | Phase | 名称 | 完成度 | 状态 |
 |-------|------|--------|------|
 | Phase 1 | 基础设施层 | 65% | 🚧 进行中 |
-| Phase 2 | 领域层 | 35% | 🚧 进行中 |
+| Phase 2 | 领域层 | 100% | ✅ 已完成 |
 | Phase 3 | AI 服务集成 | 0% | ❌ 未开始 |
-| Phase 4 | 应用层 | 25% | 🚧 进行中 |
-| Phase 5 | 接口层 | 25% | 🚧 进行中 |
+| Phase 4 | 应用层 | 75% | 🚧 进行中 |
+| Phase 5 | 接口层 | 80% | 🚧 进行中 |
 | Phase 6 | 测试 | 0% | ❌ 未开始 |
 | Phase 7 | 性能优化与监控 | 0% | ❌ 未开始 |
 | Phase 8 | 部署与 DevOps | 20% | 🚧 进行中 |
 
-**总体完成度:** ~30%
+**总体完成度:** ~60%
 
 ---
 
