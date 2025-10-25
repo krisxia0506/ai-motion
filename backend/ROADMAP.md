@@ -6,7 +6,7 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 **当前版本:** v0.1.0-alpha
 **目标版本:** v1.0.0
-**最后更新:** 2025-10-24
+**最后更新:** 2025-10-25
 
 ---
 
@@ -35,52 +35,52 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ---
 
-### 1.2 数据库层 ⏳
+### 1.2 数据库层 ✅
 
 #### MySQL 集成
 
-- [ ] 数据库连接池配置
-  - [ ] `internal/infrastructure/database/mysql.go`
-  - [ ] 连接池参数优化 (MaxOpenConns, MaxIdleConns)
-  - [ ] Ping 健康检查
-- [ ] 数据库迁移工具集成
-  - [ ] 选择迁移工具 (golang-migrate 或 goose)
-  - [ ] 创建迁移目录 `internal/infrastructure/database/migrations/`
-  - [ ] 初始化脚本
-- [ ] 数据库 Schema 定义
-  - [ ] `novels` 表 (小说)
-  - [ ] `chapters` 表 (章节)
-  - [ ] `characters` 表 (角色)
-  - [ ] `scenes` 表 (场景)
-  - [ ] `media` 表 (媒体文件)
-  - [ ] 索引优化
+- [x] 数据库连接池配置
+  - [x] `internal/infrastructure/database/mysql.go`
+  - [x] 连接池参数优化 (MaxOpenConns, MaxIdleConns)
+  - [x] Ping 健康检查
+- [x] 数据库迁移工具集成
+  - [x] 选择迁移工具 (golang-migrate)
+  - [x] 创建迁移目录 `internal/infrastructure/database/migrations/`
+  - [x] 初始化脚本
+- [x] 数据库 Schema 定义
+  - [x] `novels` 表 (小说)
+  - [x] `chapters` 表 (章节)
+  - [x] `characters` 表 (角色)
+  - [x] `scenes` 表 (场景)
+  - [x] `media` 表 (媒体文件)
+  - [x] 索引优化
 
-**完成度:** 0%
+**完成度:** 100%
 **优先级:** P0 (高)
-**预计工期:** 3-5 天
+**备注:** PR #22 完成
 
 #### Repository 实现
 
-- [ ] Novel Repository (MySQL)
-  - [ ] `internal/infrastructure/repository/mysql/novel_repository.go`
-  - [ ] Save(), FindByID(), FindAll(), Delete()
+- [x] Novel Repository (MySQL)
+  - [x] `internal/infrastructure/repository/mysql/novel_repository.go`
+  - [x] Save(), FindByID(), FindAll(), Delete()
   - [ ] 单元测试
-- [ ] Character Repository (MySQL)
-  - [ ] `internal/infrastructure/repository/mysql/character_repository.go`
-  - [ ] Save(), FindByNovelID(), FindByID()
+- [x] Character Repository (MySQL)
+  - [x] `internal/infrastructure/repository/mysql/character_repository.go`
+  - [x] Save(), FindByNovelID(), FindByID()
   - [ ] 单元测试
-- [ ] Scene Repository (MySQL)
-  - [ ] `internal/infrastructure/repository/mysql/scene_repository.go`
-  - [ ] Save(), FindByChapterID(), Batch operations
+- [x] Scene Repository (MySQL)
+  - [x] `internal/infrastructure/repository/mysql/scene_repository.go`
+  - [x] Save(), FindByChapterID(), Batch operations
   - [ ] 单元测试
 - [ ] Media Repository (MySQL)
   - [ ] `internal/infrastructure/repository/mysql/media_repository.go`
   - [ ] Save(), FindBySceneID(), UpdateStatus()
   - [ ] 单元测试
 
-**完成度:** 0%
+**完成度:** 75%
 **优先级:** P0 (高)
-**预计工期:** 5-7 天
+**备注:** PR #22 完成 Novel/Character/Scene repositories
 
 ---
 
@@ -120,112 +120,120 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ## Phase 2: 领域层 (Domain Layer)
 
-### 2.1 Novel 领域 🚧
+### 2.1 Novel 领域 ✅
 
 #### 实体和值对象
 
-- [ ] Novel 实体
-  - [ ] `internal/domain/novel/entity.go`
-  - [ ] Novel, NovelID, NovelStatus
-  - [ ] 业务方法: Parse(), Validate()
-- [ ] Chapter 值对象
-  - [ ] `internal/domain/novel/value_object.go`
-  - [ ] Chapter, Paragraph
-- [ ] Repository 接口
-  - [ ] `internal/domain/novel/repository.go`
-  - [ ] 定义 NovelRepository 接口
+- [x] Novel 实体
+  - [x] `internal/domain/novel/entity.go`
+  - [x] Novel, NovelID, NovelStatus
+  - [x] 业务方法: Parse(), Validate()
+- [x] Chapter 值对象
+  - [x] `internal/domain/novel/value_object.go`
+  - [x] Chapter, Paragraph
+- [x] Repository 接口
+  - [x] `internal/domain/novel/repository.go`
+  - [x] 定义 NovelRepository 接口
 
-**完成度:** 20%
+**完成度:** 100%
 **优先级:** P0 (高)
-**预计工期:** 2-3 天
+**备注:** PR #22 完成
 
 #### 领域服务
 
-- [ ] Novel Parser Service
-  - [ ] `internal/domain/novel/parser_service.go`
-  - [ ] 章节分割逻辑
-  - [ ] 文本清洗
-  - [ ] 支持多种格式 (TXT, EPUB)
+- [x] Novel Parser Service
+  - [x] `internal/domain/novel/parser_service.go`
+  - [x] 章节分割逻辑
+  - [x] 文本清洗
+  - [x] 支持多种格式 (TXT, EPUB)
 - [ ] Novel Validator Service
   - [ ] 内容验证规则
   - [ ] 字数统计
 
-**完成度:** 0%
+**完成度:** 80%
 **优先级:** P0 (高)
-**预计工期:** 3-5 天
+**备注:** PR #22 完成 Parser Service
 
 ---
 
-### 2.2 Character 领域 ❌
+### 2.2 Character 领域 ✅
 
 #### 实体和值对象
 
-- [ ] Character 实体
-  - [ ] `internal/domain/character/entity.go`
-  - [ ] Character, CharacterID
-  - [ ] ReferenceImages 管理
-- [ ] Appearance 值对象
-  - [ ] `internal/domain/character/value_object.go`
-  - [ ] 外貌特征描述
-  - [ ] 关键词提取
-- [ ] Personality 值对象
-  - [ ] 性格特征描述
+- [x] Character 实体
+  - [x] `internal/domain/character/entity.go`
+  - [x] Character, CharacterID
+  - [x] ReferenceImages 管理
+- [x] Appearance 值对象
+  - [x] `internal/domain/character/value_object.go`
+  - [x] 外貌特征描述 (PhysicalTraits, ClothingStyle, DistinctFeatures, Age, Height)
+  - [x] 关键词提取
+- [x] Personality 值对象
+  - [x] 性格特征描述 (Traits, Motivation, Background)
+- [x] Repository 接口
+  - [x] `internal/domain/character/repository.go`
+  - [x] 定义 CharacterRepository 接口
 
-**完成度:** 0%
+**完成度:** 100%
 **优先级:** P0 (高)
-**预计工期:** 2-3 天
+**备注:** PR #22 完成
 
 #### 领域服务
 
-- [ ] Character Extractor Service
-  - [ ] `internal/domain/character/extractor_service.go`
-  - [ ] 从小说文本提取角色
-  - [ ] NLP 分析 (或调用 AI API)
-  - [ ] 角色去重和合并
+- [x] Character Extractor Service
+  - [x] `internal/domain/character/extractor_service.go`
+  - [x] 从小说文本提取角色
+  - [x] 基于正则的角色名提取
+  - [x] 角色去重和合并
 - [ ] Character Consistency Service
   - [ ] 角色一致性验证
   - [ ] 参考图管理逻辑
 
-**完成度:** 0%
+**完成度:** 80%
 **优先级:** P0 (高)
-**预计工期:** 5-7 天
-**备注:** 核心功能，参考 `CHARACTER_CONSISTENCY.md`
+**备注:** PR #22 完成 Extractor Service，核心功能参考 `CHARACTER_CONSISTENCY.md`
 
 ---
 
-### 2.3 Scene 领域 ❌
+### 2.3 Scene 领域 ✅
 
 #### 实体和值对象
 
-- [ ] Scene 实体
-  - [ ] `internal/domain/scene/entity.go`
-  - [ ] Scene, SceneID
-  - [ ] 场景元数据 (地点、时间、角色)
-- [ ] Dialogue 值对象
-  - [ ] `internal/domain/scene/value_object.go`
-  - [ ] 对话内容、说话人
-- [ ] Description 值对象
-  - [ ] 场景描述文本
+- [x] Scene 实体
+  - [x] `internal/domain/scene/entity.go`
+  - [x] Scene, SceneID
+  - [x] 场景元数据 (地点、时间、角色)
+  - [x] 场景状态管理 (pending, ready, generating, completed, failed)
+- [x] Dialogue 值对象
+  - [x] `internal/domain/scene/value_object.go`
+  - [x] 对话内容、说话人、情绪
+- [x] Description 值对象
+  - [x] 场景描述文本 (Setting, Action, Atmosphere, FullText)
+- [x] Repository 接口
+  - [x] `internal/domain/scene/repository.go`
+  - [x] 定义 SceneRepository 接口
 
-**完成度:** 0%
+**完成度:** 100%
 **优先级:** P0 (高)
-**预计工期:** 2-3 天
+**备注:** PR #22 完成
 
 #### 领域服务
 
-- [ ] Scene Divider Service
-  - [ ] `internal/domain/scene/divider_service.go`
-  - [ ] 章节分割为场景
-  - [ ] 场景边界识别
-  - [ ] 对话提取
-- [ ] Prompt Generator Service
-  - [ ] 为 AI 生成提示词
-  - [ ] 角色特征融合
-  - [ ] 场景描述优化
+- [x] Scene Divider Service
+  - [x] `internal/domain/scene/divider_service.go`
+  - [x] 章节分割为场景
+  - [x] 场景边界识别 (location/time markers)
+  - [x] 对话提取
+- [x] Prompt Generator Service
+  - [x] `internal/domain/scene/prompt_generator_service.go`
+  - [x] 为 AI 生成提示词 (image/video)
+  - [x] 角色特征融合
+  - [x] 场景描述优化
+  - [x] 多种风格支持 (anime, realistic, cartoon, painting)
 
-**完成度:** 0%
+**完成度:** 100%
 **优先级:** P1 (中)
-**预计工期:** 4-6 天
+**备注:** PR #22 完成
 
 ---
 
@@ -497,8 +505,8 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 | Phase | 名称 | 完成度 | 状态 |
 |-------|------|--------|------|
-| Phase 1 | 基础设施层 | 25% | 🚧 进行中 |
-| Phase 2 | 领域层 | 5% | ⏳ 计划中 |
+| Phase 1 | 基础设施层 | 80% | 🚧 进行中 |
+| Phase 2 | 领域层 | 70% | 🚧 进行中 |
 | Phase 3 | AI 服务集成 | 0% | ❌ 未开始 |
 | Phase 4 | 应用层 | 0% | ❌ 未开始 |
 | Phase 5 | 接口层 | 10% | ⏳ 计划中 |
@@ -506,18 +514,19 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 | Phase 7 | 性能优化与监控 | 0% | ❌ 未开始 |
 | Phase 8 | 部署与 DevOps | 20% | 🚧 进行中 |
 
-**总体完成度:** ~15%
+**总体完成度:** ~35%
 
 ---
 
 ## 里程碑 (Milestones)
 
-### M1: MVP - v0.2.0 (30% 完成)
+### M1: MVP - v0.2.0 (70% 完成)
 - ✅ 小说上传
-- ⏳ 小说解析
-- ⏳ 角色提取
+- ✅ 小说解析
+- ✅ 角色提取
+- ✅ 场景分割
+- ✅ 数据持久化
 - ⏳ 基础图片生成
-- ⏳ 数据持久化
 
 ### M2: Alpha - v0.5.0 (0% 完成)
 - 完整的角色一致性生成
