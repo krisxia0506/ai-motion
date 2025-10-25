@@ -1,6 +1,7 @@
 import { apiClient } from './api';
-import {
+import type {
   Character,
+  CreateCharacterRequest,
   GenerateReferenceRequest,
   UpdateCharacterRequest,
   ReferenceImage,
@@ -14,6 +15,10 @@ export const characterApi = {
 
   async getCharacter(id: string): Promise<ApiResponse<Character>> {
     return apiClient.get<Character>(`/character/${id}`);
+  },
+
+  async createCharacter(data: CreateCharacterRequest): Promise<ApiResponse<Character>> {
+    return apiClient.post<Character>(`/character`, data);
   },
 
   async updateCharacter(

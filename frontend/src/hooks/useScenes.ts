@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Scene, ApiError } from '../types';
+import type { Scene, ApiError } from '../types';
 import { sceneApi } from '../services';
 import { useSceneStore } from '../store';
 
@@ -40,8 +40,8 @@ export const useScenes = (novelId: string, chapterId?: string): UseScenesResult 
 
   return {
     scenes: chapterId
-      ? scenes.filter((s) => s.chapterId === chapterId)
-      : scenes.filter((s) => s.novelId === novelId),
+      ? scenes.filter((s: Scene) => s.chapterId === chapterId)
+      : scenes.filter((s: Scene) => s.novelId === novelId),
     loading,
     error,
     refetch: fetchScenes,

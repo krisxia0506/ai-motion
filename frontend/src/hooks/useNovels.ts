@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Novel, ApiError, ListQueryParams, Pagination } from '../types';
+import type { Novel, ApiError, ListQueryParams, Pagination } from '../types';
 import { novelApi } from '../services';
 import { useNovelStore } from '../store';
 

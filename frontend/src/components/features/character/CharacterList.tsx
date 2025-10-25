@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Character, CharacterType } from '../../../types';
+import type { Character, CharacterType } from '../../../types';
 import { CharacterCard } from './CharacterCard';
 import { Input } from '../../common/Input';
 import { LoadingSpinner } from '../../common/LoadingSpinner';

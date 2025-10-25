@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { GenerationTask } from '../types';
+import type { GenerationTask } from '../types';
 
 interface GenerationState {
   tasks: GenerationTask[];

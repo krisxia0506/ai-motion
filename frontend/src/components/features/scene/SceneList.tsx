@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Scene, Status } from '../../../types';
+import type { Scene, Status } from '../../../types';
 import { SceneCard } from './SceneCard';
 import { Input } from '../../common/Input';
 import { LoadingSpinner } from '../../common/LoadingSpinner';

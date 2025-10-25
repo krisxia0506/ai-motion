@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BatchGenerationRequest, GenerationType, Scene } from '../../../types';
+import type { BatchGenerationRequest, GenerationType, Scene } from '../../../types';
 import { Card, CardBody, CardHeader } from '../../common/Card';
 import { Button } from '../../common/Button';
 import './GenerationControlPanel.css';

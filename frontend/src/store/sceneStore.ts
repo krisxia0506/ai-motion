@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Scene } from '../types';
+import type { Scene } from '../types';
 
 interface SceneState {
   scenes: Scene[];

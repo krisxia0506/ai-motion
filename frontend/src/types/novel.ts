@@ -1,6 +1,6 @@
-import { Timestamps } from './common';
+import type { Timestamps } from './common';
 
-export type NovelStatus = 'uploaded' | 'parsing' | 'parsed' | 'failed';
+export type NovelStatus = 'uploaded' | 'parsing' | 'parsed' | 'generating' | 'failed';
 
 export interface Novel extends Timestamps {
   id: string;
@@ -10,6 +10,8 @@ export interface Novel extends Timestamps {
   status: NovelStatus;
   characterCount: number;
   sceneCount: number;
+  wordCount?: number;
+  chapterCount?: number;
   metadata?: NovelMetadata;
 }
 
@@ -17,6 +19,7 @@ export interface NovelMetadata {
   fileSize?: number;
   wordCount?: number;
   chapterCount?: number;
+  characterCount?: number;
   language?: string;
 }
 
@@ -27,6 +30,7 @@ export interface Chapter {
   content: string;
   orderIndex: number;
   wordCount: number;
+  sceneCount?: number;
 }
 
 export interface UploadNovelRequest {

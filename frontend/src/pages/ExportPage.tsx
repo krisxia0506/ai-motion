@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MdFileDownload, MdCheck } from 'react-icons/md';
 import { useNovel } from '../hooks/useNovel';
 import { mediaApi } from '../services';
-import { ExportConfig, ExportFormat, VideoQuality, ExportTask } from '../types';
+import type { ExportConfig, ExportFormat, VideoQuality, ExportTask } from '../types';
 import { Card, CardBody, CardHeader } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { EmptyState } from '../components/common/EmptyState';
@@ -48,8 +48,10 @@ function ExportPage() {
         <EmptyState
           title="No Novel Selected"
           description="Please select a novel to export."
-          actionLabel="Go to Novels"
-          onAction={() => navigate('/novels')}
+          action={{
+            label: "Go to Novels",
+            onClick: () => navigate('/novels')
+          }}
         />
       </div>
     );
@@ -125,8 +127,10 @@ function ExportPage() {
         <EmptyState
           title="Novel Not Found"
           description="The requested novel could not be found."
-          actionLabel="Go to Novels"
-          onAction={() => navigate('/novels')}
+          action={{
+            label: "Go to Novels",
+            onClick: () => navigate('/novels')
+          }}
         />
       ) : (
         <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -144,8 +148,8 @@ function ExportPage() {
                 </div>
                 <div>
                   <strong>Status:</strong>{' '}
-                  <span style={{ 
-                    color: novel.status === 'completed' ? 'var(--color-success)' : 'var(--color-warning)' 
+                  <span style={{
+                    color: novel.status === 'parsed' ? 'var(--color-success)' : 'var(--color-warning)'
                   }}>
                     {novel.status}
                   </span>
@@ -257,7 +261,7 @@ function ExportPage() {
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                         <input
                           type="checkbox"
-                          checked={exportConfig.audioConfig.voiceOver}
+                          checked={exportConfig.audioConfig.voiceOver ?? false}
                           onChange={(e) => handleAudioConfigChange('voiceOver', e.target.checked)}
                           style={{ width: '18px', height: '18px' }}
                         />
@@ -266,7 +270,7 @@ function ExportPage() {
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                         <input
                           type="checkbox"
-                          checked={exportConfig.audioConfig.soundEffects}
+                          checked={exportConfig.audioConfig.soundEffects ?? false}
                           onChange={(e) => handleAudioConfigChange('soundEffects', e.target.checked)}
                           style={{ width: '18px', height: '18px' }}
                         />
@@ -294,7 +298,7 @@ function ExportPage() {
                   <Button
                     variant="primary"
                     onClick={handleExport}
-                    disabled={exporting || (exportTask && exportTask.status === 'processing')}
+                    disabled={exporting || (exportTask?.status === 'processing')}
                     style={{ flex: 1 }}
                   >
                     {exporting ? 'Starting Export...' : exportTask ? 'Export Again' : 'Start Export'}
@@ -322,7 +326,7 @@ function ExportPage() {
                       <span>Status: <strong>{exportTask.status}</strong></span>
                       <span><strong>{exportTask.progress}%</strong></span>
                     </div>
-                    <ProgressBar progress={exportTask.progress} />
+                    <ProgressBar value={exportTask.progress} />
                   </div>
 
                   {exportTask.status === 'completed' && exportTask.resultUrl && (

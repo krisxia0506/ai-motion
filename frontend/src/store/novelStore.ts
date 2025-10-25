@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Novel } from '../types';
+import type { Novel } from '../types';
 
 interface NovelState {
   novels: Novel[];

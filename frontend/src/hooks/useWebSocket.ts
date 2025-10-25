@@ -94,8 +94,8 @@ export const useWebSocketEvent = <T = unknown>(
   }, [handler]);
 
   useEffect(() => {
-    const wrappedHandler = (data: T) => {
-      handlerRef.current(data);
+    const wrappedHandler = (data: unknown) => {
+      handlerRef.current(data as T);
     };
 
     const unsubscribe = websocketService.on(event, wrappedHandler);

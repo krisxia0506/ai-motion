@@ -4,7 +4,7 @@ import { MdAdd, MdPerson } from 'react-icons/md';
 import { useCharacters } from '../hooks/useCharacters';
 import { useCharacterStore } from '../store';
 import { characterApi } from '../services';
-import { Character, CreateCharacterRequest, UpdateCharacterRequest } from '../types';
+import type { Character, CreateCharacterRequest, UpdateCharacterRequest } from '../types';
 import { CharacterList } from '../components/features/character';
 import { Modal } from '../components/common/Modal';
 import { Button } from '../components/common/Button';
@@ -41,8 +41,10 @@ function CharacterPage() {
         <EmptyState
           title="No Novel Selected"
           description="Please select a novel to view its characters."
-          actionLabel="Go to Novels"
-          onAction={() => navigate('/novels')}
+          action={{
+            label: "Go to Novels",
+            onClick: () => navigate('/novels')
+          }}
         />
       </div>
     );
@@ -107,10 +109,12 @@ function CharacterPage() {
     setShowReferenceGenerator(true);
   };
 
-  const handleReferenceGenerated = async () => {
+  const handleReferenceGenerated = async (request: any): Promise<any> => {
+    const response = await characterApi.generateReferenceImage(request);
     setShowReferenceGenerator(false);
     setCharacterForReference(null);
     await refetch();
+    return response.data;
   };
 
   return (
@@ -139,8 +143,10 @@ function CharacterPage() {
         <EmptyState
           title="No Characters Yet"
           description="Start by adding characters for your novel. You can extract them from the novel text or create them manually."
-          actionLabel="Add Character"
-          onAction={() => setShowCreateModal(true)}
+          action={{
+            label: "Add Character",
+            onClick: () => setShowCreateModal(true)
+          }}
         />
       ) : (
         <CharacterList
@@ -292,12 +298,13 @@ function CharacterPage() {
       {characterForReference && (
         <ReferenceImageGenerator
           isOpen={showReferenceGenerator}
-          character={characterForReference}
+          characterId={characterForReference.id}
+          characterName={characterForReference.name}
           onClose={() => {
             setShowReferenceGenerator(false);
             setCharacterForReference(null);
           }}
-          onGenerated={handleReferenceGenerated}
+          onGenerate={handleReferenceGenerated}
         />
       )}
     </div>

@@ -18,8 +18,8 @@ export const useCharacter = (id: string) => {
       setError(null);
       
       try {
-        const fetchedCharacter = await characterApi.getCharacter(id);
-        setCharacter(fetchedCharacter);
+        const response = await characterApi.getCharacter(id);
+        setCharacter(response.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch character');
       } finally {

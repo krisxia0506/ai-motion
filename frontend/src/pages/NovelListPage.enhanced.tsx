@@ -130,7 +130,7 @@ const NovelListPage: React.FC = () => {
 
         {error && (
           <div className="novel-list-error">
-            <p>Error loading novels: {error}</p>
+            <p>Error loading novels: {error.message || error.error}</p>
           </div>
         )}
 

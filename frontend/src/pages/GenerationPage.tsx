@@ -4,7 +4,7 @@ import { MdMovie, MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
 import { useScenes } from '../hooks/useScenes';
 import { useGenerationStore } from '../store';
 import { generationApi } from '../services';
-import { Scene, BatchGenerationRequest } from '../types';
+import type { Scene, BatchGenerationRequest } from '../types';
 import { SceneList } from '../components/features/scene/SceneList';
 import { GenerationControlPanel } from '../components/features/generation/GenerationControlPanel';
 import { GenerationQueue } from '../components/features/generation/GenerationQueue';
@@ -26,8 +26,10 @@ function GenerationPage() {
         <EmptyState
           title="No Novel Selected"
           description="Please select a novel to generate scenes."
-          actionLabel="Go to Novels"
-          onAction={() => navigate('/novels')}
+          action={{
+            label: "Go to Novels",
+            onClick: () => navigate('/novels')
+          }}
         />
       </div>
     );
@@ -156,8 +158,10 @@ function GenerationPage() {
         <EmptyState
           title="No Scenes Available"
           description="Parse your novel first to extract scenes for generation."
-          actionLabel="Go to Novel Details"
-          onAction={() => navigate(`/novels/${novelId}`)}
+          action={{
+            label: "Go to Novel Details",
+            onClick: () => navigate(`/novels/${novelId}`)
+          }}
         />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '24px' }}>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MdImage, MdVideocam, MdDownload, MdClose } from 'react-icons/md';
-import { MediaFile } from '../../../types';
+import type { MediaFile } from '../../../types';
 import { Card, CardBody, CardHeader } from '../../common/Card';
 import { Button } from '../../common/Button';
 import { ImageViewer } from './ImageViewer';

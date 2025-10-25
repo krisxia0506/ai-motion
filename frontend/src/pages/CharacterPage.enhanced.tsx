@@ -7,7 +7,7 @@ import { ReferenceImageGenerator } from '../components/features/character/Refere
 import { useCharacters } from '../hooks/useCharacters';
 import { useCharacterStore } from '../store/characterStore';
 import { characterApi } from '../services/characterApi';
-import type { Character, CreateCharacterRequest, UpdateCharacterRequest, ReferenceImage } from '../types';
+import type { Character, CreateCharacterRequest, UpdateCharacterRequest, ReferenceImage, GenerateReferenceRequest } from '../types';
 import './CharacterPage.css';
 
 const CharacterPage: React.FC = () => {
@@ -32,11 +32,11 @@ const CharacterPage: React.FC = () => {
 
   const handleSave = async (data: CreateCharacterRequest | UpdateCharacterRequest) => {
     if (editingCharacter) {
-      const updated = await characterApi.updateCharacter(editingCharacter.id, data as UpdateCharacterRequest);
-      updateCharacter(editingCharacter.id, updated);
+      const response = await characterApi.updateCharacter(editingCharacter.id, data as UpdateCharacterRequest);
+      updateCharacter(editingCharacter.id, response.data);
     } else {
-      const created = await characterApi.createCharacter(data as CreateCharacterRequest);
-      addCharacter(created);
+      const response = await characterApi.createCharacter(data as CreateCharacterRequest);
+      addCharacter(response.data);
     }
   };
 
@@ -52,13 +52,18 @@ const CharacterPage: React.FC = () => {
     setIsGeneratorOpen(true);
   };
 
-  const handleImageGenerated = (image: ReferenceImage) => {
+  const handleImageGenerated = async (request: GenerateReferenceRequest): Promise<ReferenceImage> => {
+    const response = await characterApi.generateReferenceImage(request);
+    const image = response.data;
+
     if (generatingCharacter) {
       const updatedImages = [...(generatingCharacter.referenceImages || []), image];
       updateCharacter(generatingCharacter.id, { referenceImages: updatedImages });
     }
     setIsGeneratorOpen(false);
     setGeneratingCharacter(null);
+
+    return image;
   };
 
   if (loading) {
@@ -77,7 +82,7 @@ const CharacterPage: React.FC = () => {
       <div className="character-page">
         <ErrorMessage
           title="Failed to load characters"
-          message={error}
+          message={error.message || error.error}
           onRetry={() => window.location.reload()}
         />
       </div>
@@ -111,7 +116,7 @@ const CharacterPage: React.FC = () => {
         characters={characters}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        onGenerateImage={handleGenerateImage}
+        onGenerateReference={handleGenerateImage}
       />
 
       <CharacterEditor
@@ -124,13 +129,14 @@ const CharacterPage: React.FC = () => {
 
       {generatingCharacter && (
         <ReferenceImageGenerator
-          character={generatingCharacter}
+          characterId={generatingCharacter.id}
+          characterName={generatingCharacter.name}
           isOpen={isGeneratorOpen}
           onClose={() => {
             setIsGeneratorOpen(false);
             setGeneratingCharacter(null);
           }}
-          onGenerated={handleImageGenerated}
+          onGenerate={handleImageGenerated}
         />
       )}
     </div>

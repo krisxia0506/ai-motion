@@ -152,7 +152,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  let controlsTimeout: NodeJS.Timeout;
+  let controlsTimeout: ReturnType<typeof setTimeout>;
 
   const handleMouseMove = () => {
     setShowControls(true);

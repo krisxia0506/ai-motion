@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GenerateReferenceRequest, ReferenceImage } from '../../../types';
+import type { GenerateReferenceRequest, ReferenceImage } from '../../../types';
 import { Button } from '../../common/Button';
 import { Modal } from '../../common/Modal';
 import './ReferenceImageGenerator.css';

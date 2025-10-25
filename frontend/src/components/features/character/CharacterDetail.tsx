@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Character, UpdateCharacterRequest } from '../../../types';
+import type { Character, UpdateCharacterRequest } from '../../../types';
 import { Card, CardBody, CardHeader } from '../../common/Card';
 import { Button } from '../../common/Button';
 import { Input } from '../../common/Input';

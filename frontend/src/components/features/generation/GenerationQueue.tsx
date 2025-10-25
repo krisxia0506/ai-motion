@@ -1,5 +1,5 @@
 import React from 'react';
-import { GenerationTask } from '../../../types';
+import type { GenerationTask } from '../../../types';
 import { Card, CardBody, CardHeader } from '../../common/Card';
 import { Button } from '../../common/Button';
 import './GenerationQueue.css';

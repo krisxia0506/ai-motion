@@ -1,5 +1,5 @@
 import React from 'react';
-import { Character, CharacterType } from '../../../types';
+import type { Character, CharacterType } from '../../../types';
 import { Card, CardBody, CardFooter } from '../../common/Card';
 import { Button } from '../../common/Button';
 import './CharacterCard.css';

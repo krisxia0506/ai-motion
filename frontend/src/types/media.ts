@@ -1,4 +1,4 @@
-import { Timestamps, Status } from './common';
+import type { Timestamps, Status } from './common';
 
 export type MediaType = 'image' | 'video' | 'audio';
 export type ExportFormat = 'mp4' | 'mov' | 'avi' | 'webm';
@@ -50,4 +50,10 @@ export interface ExportTask extends Timestamps {
   config: ExportConfig;
   resultUrl?: string;
   error?: string;
+}
+
+export interface MediaFile extends Media {
+  filename: string;
+  sceneId?: string;
+  characterId?: string;
 }

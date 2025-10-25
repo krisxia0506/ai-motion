@@ -9,7 +9,7 @@ import { ErrorMessage } from '../components/common/ErrorMessage';
 import { EmptyState } from '../components/common/EmptyState';
 import { useScenes } from '../hooks/useScenes';
 import { useGenerationStore } from '../store';
-import { Scene, BatchGenerationRequest, GenerationTask } from '../types';
+import type { Scene, BatchGenerationRequest, GenerationTask } from '../types';
 import { generationApi } from '../services';
 import './SceneGenerationPage.css';
 
@@ -17,7 +17,7 @@ const SceneGenerationPage: React.FC = () => {
   const { novelId } = useParams<{ novelId: string }>();
   const navigate = useNavigate();
   const { scenes, loading, error, refetch } = useScenes(novelId || '');
-  const { tasks, addTask, updateTaskStatus, clearCompletedTasks } = useGenerationStore();
+  const { tasks, addTask, updateTask, clearCompletedTasks } = useGenerationStore();
   
   const [selectedScenes, setSelectedScenes] = useState<Scene[]>([]);
 
@@ -78,7 +78,7 @@ const SceneGenerationPage: React.FC = () => {
   const handleCancelTask = async (taskId: string) => {
     try {
       await generationApi.cancelTask(taskId);
-      updateTaskStatus(taskId, 'failed', 'Cancelled by user');
+      updateTask(taskId, { status: 'failed', error: 'Cancelled by user' });
     } catch (err) {
       console.error('Failed to cancel task:', err);
     }
@@ -92,9 +92,8 @@ const SceneGenerationPage: React.FC = () => {
       const request: BatchGenerationRequest = {
         sceneIds: [task.sceneId],
         type: task.type,
-        config: task.config,
       };
-      
+
       await handleBatchGenerate(request);
     } catch (err) {
       console.error('Failed to retry task:', err);
@@ -119,7 +118,7 @@ const SceneGenerationPage: React.FC = () => {
   if (loading) {
     return (
       <div className="scene-generation-page">
-        <LoadingSpinner fullScreen message="Loading scenes..." />
+        <LoadingSpinner fullScreen text="Loading scenes..." />
       </div>
     );
   }
@@ -168,11 +167,10 @@ const SceneGenerationPage: React.FC = () => {
           icon={<MdMovie size={64} />}
           title="No scenes found"
           description="Parse your novel to extract scenes for generation"
-          action={
-            <Button variant="primary" onClick={() => navigate(`/novels/${novelId}`)}>
-              Go to Novel
-            </Button>
-          }
+          action={{
+            label: "Go to Novel",
+            onClick: () => navigate(`/novels/${novelId}`)
+          }}
         />
       ) : (
         <div className="generation-content">

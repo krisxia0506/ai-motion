@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdUploadFile, MdAutoAwesome, MdPerson, MdMovie, MdVolumeUp } from 'react-icons/md';
 import { Button, Card, CardBody } from '../components/common';
-import { apiClient } from '../services/api';
+import { novelApi } from '../services/novelApi';
 import './HomePage.css';
 
 function HomePage() {
@@ -26,13 +26,8 @@ function HomePage() {
       setUploading(true);
       setError(null);
 
-      const response = await apiClient.uploadNovel(selectedFile);
-
-      if (response.error) {
-        setError(response.error);
-      } else {
-        navigate('/novels');
-      }
+      await novelApi.uploadNovelFile(selectedFile);
+      navigate('/novels');
     } catch {
       setError('上传失败，请重试');
     } finally {

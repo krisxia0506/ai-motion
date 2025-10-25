@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { GenerationTask, GenerateSceneRequest, ApiError } from '../types';
+import type { GenerationTask, GenerateSceneRequest, ApiError } from '../types';
 import { sceneApi, generationApi } from '../services';
 import { useGenerationStore } from '../store';
 

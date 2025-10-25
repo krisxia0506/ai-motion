@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Character, ApiError } from '../types';
+import type { Character, ApiError } from '../types';
 import { characterApi } from '../services';
 import { useCharacterStore } from '../store';
 
@@ -37,7 +37,7 @@ export const useCharacters = (novelId: string): UseCharactersResult => {
   }, [novelId]);
 
   return {
-    characters: characters.filter((c) => c.novelId === novelId),
+    characters: characters.filter((c: Character) => c.novelId === novelId),
     loading,
     error,
     refetch: fetchCharacters,

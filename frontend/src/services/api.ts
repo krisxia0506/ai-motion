@@ -1,4 +1,4 @@
-import { ApiResponse, ApiError } from '../types';
+import type { ApiResponse, ApiError } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const API_VERSION = '/api/v1';
@@ -22,10 +22,15 @@ export class ApiClient {
   ): Promise<ApiResponse<T>> {
     try {
       const token = localStorage.getItem('auth_token');
-      const headers: HeadersInit = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...options.headers,
       };
+
+      if (options.headers) {
+        Object.entries(options.headers).forEach(([key, value]) => {
+          headers[key] = String(value);
+        });
+      }
 
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -96,7 +101,7 @@ export class ApiClient {
     }
 
     const token = localStorage.getItem('auth_token');
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scene, Status } from '../../../types';
+import type { Scene, Status } from '../../../types';
 import { Card, CardBody, CardFooter } from '../../common/Card';
 import { Button } from '../../common/Button';
 import './SceneCard.css';

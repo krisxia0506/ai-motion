@@ -63,7 +63,6 @@ export const NovelList: React.FC<NovelListProps> = ({ onNovelSelect }) => {
       parsing: 'status-badge-parsing',
       parsed: 'status-badge-parsed',
       generating: 'status-badge-generating',
-      completed: 'status-badge-completed',
       failed: 'status-badge-failed',
     };
     return classMap[status] || 'status-badge-default';
@@ -75,7 +74,6 @@ export const NovelList: React.FC<NovelListProps> = ({ onNovelSelect }) => {
       parsing: 'Parsing...',
       parsed: 'Parsed',
       generating: 'Generating...',
-      completed: 'Completed',
       failed: 'Failed',
     };
     return labelMap[status] || status;

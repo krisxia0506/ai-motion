@@ -1,4 +1,4 @@
-import { Pagination } from './common';
+import type { Pagination } from './common';
 
 export interface ApiResponse<T = unknown> {
   data: T;

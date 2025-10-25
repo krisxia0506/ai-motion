@@ -1,4 +1,4 @@
-import { Timestamps, Status } from './common';
+import type { Timestamps, Status } from './common';
 
 export interface Scene extends Timestamps {
   id: string;
@@ -25,11 +25,11 @@ export interface GeneratedMedia {
   type: 'image' | 'video';
   url: string;
   status: Status;
-  metadata?: MediaMetadata;
+  metadata?: SceneMediaMetadata;
   generatedAt: string;
 }
 
-export interface MediaMetadata {
+export interface SceneMediaMetadata {
   width?: number;
   height?: number;
   duration?: number;
@@ -40,10 +40,10 @@ export interface MediaMetadata {
 export interface GenerateSceneRequest {
   sceneId: string;
   type: 'image' | 'video';
-  config?: GenerationConfig;
+  config?: SceneGenerationConfig;
 }
 
-export interface GenerationConfig {
+export interface SceneGenerationConfig {
   style?: string;
   aspectRatio?: string;
   quality?: 'low' | 'medium' | 'high';

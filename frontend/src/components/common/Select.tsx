@@ -1,4 +1,4 @@
-import React, { SelectHTMLAttributes } from 'react';
+import React, { type SelectHTMLAttributes } from 'react';
 import './Select.css';
 
 export interface SelectOption {
@@ -13,6 +13,7 @@ interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onC
   helperText?: string;
   options: SelectOption[];
   placeholder?: string;
+  fullWidth?: boolean;
   onChange?: (value: string) => void;
 }
 
@@ -22,6 +23,7 @@ export const Select: React.FC<SelectProps> = ({
   helperText,
   options,
   placeholder,
+  fullWidth,
   className = '',
   onChange,
   ...props
@@ -31,7 +33,7 @@ export const Select: React.FC<SelectProps> = ({
   };
 
   return (
-    <div className={`select-wrapper ${className}`}>
+    <div className={`select-wrapper ${fullWidth ? 'select-full-width' : ''} ${className}`}>
       {label && <label className="select-label">{label}</label>}
       <select
         className={`select ${error ? 'select-error' : ''}`}
