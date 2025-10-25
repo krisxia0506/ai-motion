@@ -1,41 +1,38 @@
-export interface Character {
+import { Timestamps } from './common';
+
+export type CharacterType = 'main' | 'supporting' | 'minor';
+
+export interface Character extends Timestamps {
   id: string;
   novelId: string;
   name: string;
+  type: CharacterType;
   appearance: string;
   personality: string;
-  role: CharacterRole;
-  referenceImages: string[];
-  hasReferenceImage: boolean;
-  firstAppearanceChapter?: number;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  background?: string;
+  relationships?: string[];
+  referenceImages: ReferenceImage[];
 }
 
-export type CharacterRole = 'protagonist' | 'antagonist' | 'supporting' | 'minor';
+export interface ReferenceImage {
+  id: string;
+  characterId: string;
+  url: string;
+  prompt: string;
+  modelUsed: string;
+  status: 'generating' | 'completed' | 'failed';
+  generatedAt: string;
+}
 
-export interface CharacterUpdateRequest {
+export interface GenerateReferenceRequest {
+  characterId: string;
+  prompt?: string;
+  style?: string;
+}
+
+export interface UpdateCharacterRequest {
   name?: string;
   appearance?: string;
   personality?: string;
-  role?: CharacterRole;
-}
-
-export interface GenerateReferenceImageRequest {
-  characterId: string;
-  style?: 'anime' | 'realistic' | 'cartoon';
-  seed?: number;
-}
-
-export interface GenerateReferenceImageResponse {
-  imageUrl: string;
-  characterId: string;
-  message?: string;
-}
-
-export interface CharacterListQuery {
-  novelId: string;
-  role?: CharacterRole;
-  hasReferenceImage?: boolean;
-  search?: string;
+  background?: string;
 }

@@ -1,16 +1,23 @@
-export type NovelStatus = 'uploaded' | 'parsing' | 'parsed' | 'generating' | 'completed' | 'failed';
+import { Timestamps } from './common';
 
-export interface Novel {
+export type NovelStatus = 'uploaded' | 'parsing' | 'parsed' | 'failed';
+
+export interface Novel extends Timestamps {
   id: string;
   title: string;
   author: string;
   content: string;
   status: NovelStatus;
-  characterIds: string[];
-  chapterCount: number;
-  wordCount: number;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  characterCount: number;
+  sceneCount: number;
+  metadata?: NovelMetadata;
+}
+
+export interface NovelMetadata {
+  fileSize?: number;
+  wordCount?: number;
+  chapterCount?: number;
+  language?: string;
 }
 
 export interface Chapter {
@@ -18,9 +25,8 @@ export interface Chapter {
   novelId: string;
   title: string;
   content: string;
-  sequence: number;
-  sceneCount: number;
-  createdAt: Date | string;
+  orderIndex: number;
+  wordCount: number;
 }
 
 export interface UploadNovelRequest {
@@ -29,20 +35,6 @@ export interface UploadNovelRequest {
   content: string;
 }
 
-export interface UploadNovelResponse {
-  novel: Novel;
-  message?: string;
-}
-
 export interface ParseNovelRequest {
   novelId: string;
-}
-
-export interface NovelListQuery {
-  page?: number;
-  pageSize?: number;
-  status?: NovelStatus;
-  search?: string;
-  sortBy?: 'createdAt' | 'updatedAt' | 'title';
-  sortOrder?: 'asc' | 'desc';
 }

@@ -1,49 +1,27 @@
-export interface ApiResponse<T = any> {
+import { Pagination } from './common';
+
+export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   success: boolean;
 }
 
 export interface ApiError {
+  error: string;
   message: string;
-  code: string;
-  details?: Record<string, any>;
   statusCode: number;
+  timestamp: string;
 }
 
-export interface PaginatedResponse<T = any> {
+export interface PaginatedResponse<T> {
   data: T[];
-  pagination: PaginationMeta;
-  message?: string;
-  success: boolean;
+  pagination: Pagination;
 }
 
-export interface PaginationMeta {
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}
-
-export interface PaginationQuery {
+export interface ListQueryParams {
   page?: number;
   pageSize?: number;
-}
-
-export interface SortQuery {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-}
-
-export interface SearchQuery {
   search?: string;
 }
-
-export type RequestConfig = {
-  headers?: Record<string, string>;
-  params?: Record<string, any>;
-  timeout?: number;
-  signal?: AbortSignal;
-};

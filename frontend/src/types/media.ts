@@ -1,67 +1,53 @@
-export interface MediaFile {
+import { Timestamps, Status } from './common';
+
+export type MediaType = 'image' | 'video' | 'audio';
+export type ExportFormat = 'mp4' | 'mov' | 'avi' | 'webm';
+export type VideoQuality = '720p' | '1080p' | '4k';
+
+export interface Media extends Timestamps {
   id: string;
   type: MediaType;
   url: string;
-  thumbnail?: string;
-  filename: string;
-  size: number;
-  mimeType: string;
-  width?: number;
-  height?: number;
+  thumbnailUrl?: string;
+  status: Status;
+  metadata: MediaMetadata;
+}
+
+export interface MediaMetadata {
+  width: number;
+  height: number;
   duration?: number;
-  relatedId?: string;
-  relatedType?: 'scene' | 'character' | 'novel';
-  createdAt: Date | string;
-}
-
-export type MediaType = 'image' | 'video' | 'audio';
-
-export interface MediaUploadRequest {
-  file: File;
-  type: MediaType;
-  relatedId?: string;
-  relatedType?: 'scene' | 'character' | 'novel';
-}
-
-export interface MediaUploadResponse {
-  media: MediaFile;
-  message?: string;
-}
-
-export interface MediaListQuery {
-  type?: MediaType;
-  relatedId?: string;
-  relatedType?: 'scene' | 'character' | 'novel';
-  page?: number;
-  pageSize?: number;
+  format: string;
+  size: number;
+  bitrate?: number;
 }
 
 export interface ExportConfig {
   format: ExportFormat;
-  quality: ExportQuality;
-  includeAudio?: boolean;
-  watermark?: WatermarkConfig;
+  quality: VideoQuality;
+  includeSubtitles: boolean;
+  includeAudio: boolean;
+  audioConfig?: AudioConfig;
 }
 
-export type ExportFormat = 'mp4' | 'gif' | 'images' | 'pdf';
-export type ExportQuality = 'low' | 'medium' | 'high' | 'ultra';
-
-export interface WatermarkConfig {
-  enabled: boolean;
-  text?: string;
-  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
-  opacity?: number;
+export interface AudioConfig {
+  backgroundMusic?: string;
+  voiceOver?: boolean;
+  soundEffects?: boolean;
+  volume?: number;
 }
 
 export interface ExportRequest {
   novelId: string;
-  sceneIds?: string[];
   config: ExportConfig;
 }
 
-export interface ExportResponse {
-  exportId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  downloadUrl?: string;
-  message?: string;
+export interface ExportTask extends Timestamps {
+  id: string;
+  novelId: string;
+  status: Status;
+  progress: number;
+  config: ExportConfig;
+  resultUrl?: string;
+  error?: string;
 }
