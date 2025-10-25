@@ -6,7 +6,7 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 **当前版本:** v0.1.0-alpha
 **目标版本:** v1.0.0
-**最后更新:** 2025-10-24
+**最后更新:** 2025-10-25
 
 ---
 
@@ -35,35 +35,35 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ---
 
-### 1.2 数据库层 ⏳
+### 1.2 数据库层 ✅
 
 #### MySQL 集成
 
-- [ ] 数据库连接池配置
-  - [ ] `internal/infrastructure/database/mysql.go`
-  - [ ] 连接池参数优化 (MaxOpenConns, MaxIdleConns)
-  - [ ] Ping 健康检查
-- [ ] 数据库迁移工具集成
-  - [ ] 选择迁移工具 (golang-migrate 或 goose)
-  - [ ] 创建迁移目录 `internal/infrastructure/database/migrations/`
-  - [ ] 初始化脚本
-- [ ] 数据库 Schema 定义
-  - [ ] `novels` 表 (小说)
-  - [ ] `chapters` 表 (章节)
-  - [ ] `characters` 表 (角色)
-  - [ ] `scenes` 表 (场景)
-  - [ ] `media` 表 (媒体文件)
-  - [ ] 索引优化
+- [x] 数据库连接池配置
+  - [x] `internal/infrastructure/database/mysql.go`
+  - [x] 连接池参数优化 (MaxOpenConns, MaxIdleConns)
+  - [x] Ping 健康检查
+- [x] 数据库迁移工具集成
+  - [x] 选择迁移工具 (golang-migrate 或 goose)
+  - [x] 创建迁移目录 `internal/infrastructure/database/migrations/`
+  - [x] 初始化脚本
+- [x] 数据库 Schema 定义
+  - [x] `novels` 表 (小说)
+  - [x] `chapters` 表 (章节)
+  - [x] `characters` 表 (角色)
+  - [x] `scenes` 表 (场景)
+  - [x] `media` 表 (媒体文件)
+  - [x] 索引优化
 
-**完成度:** 0%
+**完成度:** 100%
 **优先级:** P0 (高)
-**预计工期:** 3-5 天
+**完成时间:** PR #19
 
 #### Repository 实现
 
-- [ ] Novel Repository (MySQL)
-  - [ ] `internal/infrastructure/repository/mysql/novel_repository.go`
-  - [ ] Save(), FindByID(), FindAll(), Delete()
+- [x] Novel Repository (MySQL)
+  - [x] `internal/infrastructure/repository/mysql/novel_repository.go`
+  - [x] Save(), FindByID(), FindAll(), Delete()
   - [ ] 单元测试
 - [ ] Character Repository (MySQL)
   - [ ] `internal/infrastructure/repository/mysql/character_repository.go`
@@ -78,7 +78,7 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
   - [ ] Save(), FindBySceneID(), UpdateStatus()
   - [ ] 单元测试
 
-**完成度:** 0%
+**完成度:** 25%
 **优先级:** P0 (高)
 **预计工期:** 5-7 天
 
@@ -120,39 +120,39 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ## Phase 2: 领域层 (Domain Layer)
 
-### 2.1 Novel 领域 🚧
+### 2.1 Novel 领域 ✅
 
 #### 实体和值对象
 
-- [ ] Novel 实体
-  - [ ] `internal/domain/novel/entity.go`
-  - [ ] Novel, NovelID, NovelStatus
-  - [ ] 业务方法: Parse(), Validate()
-- [ ] Chapter 值对象
-  - [ ] `internal/domain/novel/value_object.go`
-  - [ ] Chapter, Paragraph
-- [ ] Repository 接口
-  - [ ] `internal/domain/novel/repository.go`
-  - [ ] 定义 NovelRepository 接口
+- [x] Novel 实体
+  - [x] `internal/domain/novel/entity.go`
+  - [x] Novel, NovelID, NovelStatus
+  - [x] 业务方法: Parse(), Validate()
+- [x] Chapter 值对象
+  - [x] `internal/domain/novel/value_object.go`
+  - [x] Chapter, Paragraph
+- [x] Repository 接口
+  - [x] `internal/domain/novel/repository.go`
+  - [x] 定义 NovelRepository 接口
 
-**完成度:** 20%
+**完成度:** 100%
 **优先级:** P0 (高)
-**预计工期:** 2-3 天
+**完成时间:** PR #19
 
 #### 领域服务
 
-- [ ] Novel Parser Service
-  - [ ] `internal/domain/novel/parser_service.go`
-  - [ ] 章节分割逻辑
-  - [ ] 文本清洗
-  - [ ] 支持多种格式 (TXT, EPUB)
-- [ ] Novel Validator Service
-  - [ ] 内容验证规则
-  - [ ] 字数统计
+- [x] Novel Parser Service
+  - [x] `internal/domain/novel/parser_service.go`
+  - [x] 章节分割逻辑
+  - [x] 文本清洗
+  - [x] 支持多种格式 (TXT, EPUB)
+- [x] Novel Validator Service
+  - [x] 内容验证规则
+  - [x] 字数统计
 
-**完成度:** 0%
+**完成度:** 100%
 **优先级:** P0 (高)
-**预计工期:** 3-5 天
+**完成时间:** PR #19
 
 ---
 
@@ -323,23 +323,23 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ## Phase 4: 应用层 (Application Layer)
 
-### 4.1 Novel Application Service ❌
+### 4.1 Novel Application Service ✅
 
-- [ ] Novel Service
-  - [ ] `internal/application/service/novel_service.go`
-  - [ ] UploadAndParse(req) -> NovelDTO
-  - [ ] GetNovel(id) -> NovelDTO
-  - [ ] ListNovels(page, size) -> []NovelDTO
-  - [ ] DeleteNovel(id)
-- [ ] Novel DTOs
-  - [ ] `internal/application/dto/novel_dto.go`
-  - [ ] UploadNovelRequest
-  - [ ] NovelResponse
-  - [ ] NovelListResponse
+- [x] Novel Service
+  - [x] `internal/application/service/novel_service.go`
+  - [x] UploadAndParse(req) -> NovelDTO
+  - [x] GetNovel(id) -> NovelDTO
+  - [x] ListNovels(page, size) -> []NovelDTO
+  - [x] DeleteNovel(id)
+- [x] Novel DTOs
+  - [x] `internal/application/dto/novel_dto.go`
+  - [x] UploadNovelRequest
+  - [x] NovelResponse
+  - [x] NovelListResponse
 
-**完成度:** 0%
+**完成度:** 100%
 **优先级:** P0 (高)
-**预计工期:** 3-4 天
+**完成时间:** PR #19
 
 ---
 
@@ -398,14 +398,14 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ## Phase 5: 接口层 (Interface Layer)
 
-### 5.1 HTTP Handlers ❌
+### 5.1 HTTP Handlers 🚧
 
-- [ ] Novel Handler - POST `/api/v1/novel/upload`, GET `/api/v1/novel/:id`, etc.
+- [x] Novel Handler - POST `/api/v1/novel/upload`, GET `/api/v1/novel/:id`, etc.
 - [ ] Character Handler - GET `/api/v1/characters/:novel_id`, etc.
 - [ ] Scene Handler - GET `/api/v1/scenes/:novel_id`, etc.
 - [ ] Generation Handler - POST `/api/v1/generate/batch`, etc.
 
-**完成度:** 0%
+**完成度:** 25%
 **优先级:** P0 (高)
 **预计工期:** 6-8 天
 
@@ -497,27 +497,27 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 | Phase | 名称 | 完成度 | 状态 |
 |-------|------|--------|------|
-| Phase 1 | 基础设施层 | 25% | 🚧 进行中 |
-| Phase 2 | 领域层 | 5% | ⏳ 计划中 |
+| Phase 1 | 基础设施层 | 65% | 🚧 进行中 |
+| Phase 2 | 领域层 | 35% | 🚧 进行中 |
 | Phase 3 | AI 服务集成 | 0% | ❌ 未开始 |
-| Phase 4 | 应用层 | 0% | ❌ 未开始 |
-| Phase 5 | 接口层 | 10% | ⏳ 计划中 |
+| Phase 4 | 应用层 | 25% | 🚧 进行中 |
+| Phase 5 | 接口层 | 25% | 🚧 进行中 |
 | Phase 6 | 测试 | 0% | ❌ 未开始 |
 | Phase 7 | 性能优化与监控 | 0% | ❌ 未开始 |
 | Phase 8 | 部署与 DevOps | 20% | 🚧 进行中 |
 
-**总体完成度:** ~15%
+**总体完成度:** ~30%
 
 ---
 
 ## 里程碑 (Milestones)
 
-### M1: MVP - v0.2.0 (30% 完成)
+### M1: MVP - v0.2.0 (60% 完成)
 - ✅ 小说上传
-- ⏳ 小说解析
+- ✅ 小说解析
 - ⏳ 角色提取
 - ⏳ 基础图片生成
-- ⏳ 数据持久化
+- ✅ 数据持久化
 
 ### M2: Alpha - v0.5.0 (0% 完成)
 - 完整的角色一致性生成
@@ -546,17 +546,24 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ## 下一步行动
 
-### 本周计划
-1. [ ] 完成 MySQL 数据库集成
-2. [ ] 实现 Novel Repository
-3. [ ] 完成 Novel 领域实体和服务
-4. [ ] 实现 Novel Handler 和 API
+### 本周计划 (PR #19 已完成)
+1. [x] 完成 MySQL 数据库集成
+2. [x] 实现 Novel Repository
+3. [x] 完成 Novel 领域实体和服务
+4. [x] 实现 Novel Handler 和 API
+
+### 下一迭代计划 (接下来 5 个任务)
+1. [ ] Character Entity & Repository - 实现角色实体和存储库
+2. [ ] Character Extractor Service - 从小说中提取角色信息
+3. [ ] Scene Entity & Repository - 实现场景实体和存储库
+4. [ ] Scene Divider Service - 章节分割为场景
+5. [ ] Prompt Generator Service - 生成 AI 提示词
 
 ### 本月计划
-1. [ ] 完成 Phase 1 (基础设施层)
-2. [ ] 完成 Phase 2 (领域层)
+1. 🚧 完成 Phase 1 (基础设施层) - 65% 完成
+2. 🚧 完成 Phase 2 (领域层) - 35% 完成
 3. [ ] 开始 Phase 3 (AI 服务集成)
-4. [ ] 达到 M1 (MVP) 里程碑
+4. ⏳ 达到 M1 (MVP) 里程碑 - 60% 完成
 
 ---
 
