@@ -1,54 +1,56 @@
-import type { Novel, UploadNovelRequest } from '../types';
+import { apiClient } from './api';
+import {
+  Novel,
+  UploadNovelRequest,
+  ParseNovelRequest,
+  ApiResponse,
+  PaginatedResponse,
+  ListQueryParams,
+  Chapter,
+} from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+export const novelApi = {
+  async uploadNovel(data: UploadNovelRequest): Promise<ApiResponse<Novel>> {
+    return apiClient.post<Novel>('/novel/upload', data);
+  },
 
-class NovelApiService {
-  async uploadNovel(data: UploadNovelRequest): Promise<Novel> {
-    const response = await fetch(`${API_BASE_URL}/novels`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to upload novel');
-    }
-    
-    const result = await response.json();
-    return result.data;
-  }
+  async uploadNovelFile(file: File): Promise<ApiResponse<Novel>> {
+    return apiClient.uploadFile<Novel>('/novel/upload', file);
+  },
 
-  async getNovel(id: string): Promise<Novel> {
-    const response = await fetch(`${API_BASE_URL}/novels/${id}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch novel');
-    }
-    
-    const result = await response.json();
-    return result.data;
-  }
+  async getNovel(id: string): Promise<ApiResponse<Novel>> {
+    return apiClient.get<Novel>(`/novel/${id}`);
+  },
 
-  async listNovels(page = 1, size = 20): Promise<Novel[]> {
-    const response = await fetch(`${API_BASE_URL}/novels?page=${page}&size=${size}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch novels');
-    }
-    
-    const result = await response.json();
-    return result.data;
-  }
+  async listNovels(params?: ListQueryParams): Promise<ApiResponse<PaginatedResponse<Novel>>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.pageSize) query.append('pageSize', params.pageSize.toString());
+    if (params?.sortBy) query.append('sortBy', params.sortBy);
+    if (params?.sortOrder) query.append('sortOrder', params.sortOrder);
+    if (params?.search) query.append('search', params.search);
 
-  async deleteNovel(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/novels/${id}`, {
-      method: 'DELETE',
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to delete novel');
-    }
-  }
-}
+    const endpoint = `/novels${query.toString() ? `?${query}` : ''}`;
+    return apiClient.get<PaginatedResponse<Novel>>(endpoint);
+  },
 
-export const novelApi = new NovelApiService();
+  async parseNovel(request: ParseNovelRequest): Promise<ApiResponse<void>> {
+    return apiClient.post<void>(`/novel/${request.novelId}/parse`);
+  },
+
+  async updateNovel(id: string, data: Partial<Novel>): Promise<ApiResponse<Novel>> {
+    return apiClient.put<Novel>(`/novel/${id}`, data);
+  },
+
+  async deleteNovel(id: string): Promise<ApiResponse<void>> {
+    return apiClient.delete<void>(`/novel/${id}`);
+  },
+
+  async getChapters(novelId: string): Promise<ApiResponse<Chapter[]>> {
+    return apiClient.get<Chapter[]>(`/novel/${novelId}/chapters`);
+  },
+
+  async getChapter(novelId: string, chapterId: string): Promise<ApiResponse<Chapter>> {
+    return apiClient.get<Chapter>(`/novel/${novelId}/chapters/${chapterId}`);
+  },
+};

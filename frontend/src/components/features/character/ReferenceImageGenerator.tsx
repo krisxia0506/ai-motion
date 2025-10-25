@@ -1,147 +1,174 @@
 import React, { useState } from 'react';
-import { Button, Select, Modal, ProgressBar } from '../../common';
-import { characterApi } from '../../../services/characterApi';
-import type { Character, ReferenceImage } from '../../../types';
+import { GenerateReferenceRequest, ReferenceImage } from '../../../types';
+import { Button } from '../../common/Button';
+import { Modal } from '../../common/Modal';
 import './ReferenceImageGenerator.css';
 
 interface ReferenceImageGeneratorProps {
-  character: Character;
+  characterId: string;
+  characterName: string;
   isOpen: boolean;
   onClose: () => void;
-  onGenerated: (image: ReferenceImage) => void;
+  onGenerate: (request: GenerateReferenceRequest) => Promise<ReferenceImage>;
 }
 
+const STYLE_OPTIONS = [
+  { value: 'anime', label: 'Anime' },
+  { value: 'realistic', label: 'Realistic' },
+  { value: 'cartoon', label: 'Cartoon' },
+  { value: 'semi-realistic', label: 'Semi-Realistic' },
+];
+
 export const ReferenceImageGenerator: React.FC<ReferenceImageGeneratorProps> = ({
-  character,
+  characterId,
+  characterName,
   isOpen,
   onClose,
-  onGenerated,
+  onGenerate,
 }) => {
-  const [style, setStyle] = useState<'anime' | 'realistic' | 'cartoon' | 'semi-realistic'>('anime');
   const [customPrompt, setCustomPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedStyle, setSelectedStyle] = useState('anime');
+  const [generating, setGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<ReferenceImage | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
-    setIsGenerating(true);
-    setError(null);
-    setProgress(0);
-
     try {
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => Math.min(prev + 5, 95));
-      }, 500);
+      setGenerating(true);
+      setError(null);
+      setGeneratedImage(null);
 
-      const image = await characterApi.generateReferenceImage({
-        characterId: character.id,
-        style,
-        customPrompt: customPrompt || undefined,
-      });
+      const request: GenerateReferenceRequest = {
+        characterId,
+        prompt: customPrompt || undefined,
+        style: selectedStyle,
+      };
 
-      clearInterval(progressInterval);
-      setProgress(100);
-      setGeneratedImage(image);
-      
-      setTimeout(() => {
-        onGenerated(image);
-      }, 500);
+      const result = await onGenerate(request);
+      setGeneratedImage(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate image');
-      setProgress(0);
     } finally {
-      setIsGenerating(false);
+      setGenerating(false);
     }
   };
 
-  const handleClose = () => {
-    setStyle('anime');
-    setCustomPrompt('');
-    setProgress(0);
-    setError(null);
+  const handleAccept = () => {
     setGeneratedImage(null);
+    setCustomPrompt('');
     onClose();
   };
 
+  const handleRegenerate = () => {
+    setGeneratedImage(null);
+    handleGenerate();
+  };
+
+  const handleReset = () => {
+    setGeneratedImage(null);
+    setCustomPrompt('');
+    setError(null);
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Generate Reference Image">
-      <div className="reference-image-generator">
-        <div className="reference-image-generator-character">
-          <h3>{character.name}</h3>
-          <p className="reference-image-generator-type">{character.type} character</p>
-        </div>
+    <Modal isOpen={isOpen} onClose={onClose} title={`Generate Reference Image for ${characterName}`}>
+      <div className="reference-generator">
+        {!generatedImage && !generating && (
+          <div className="generator-form">
+            <div className="form-group">
+              <label htmlFor="style">Art Style</label>
+              <div className="style-options">
+                {STYLE_OPTIONS.map((style) => (
+                  <button
+                    key={style.value}
+                    className={`style-option ${selectedStyle === style.value ? 'active' : ''}`}
+                    onClick={() => setSelectedStyle(style.value)}
+                  >
+                    {style.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {!generatedImage && (
-          <>
-            <Select
-              label="Style"
-              options={[
-                { value: 'anime', label: 'Anime' },
-                { value: 'realistic', label: 'Realistic' },
-                { value: 'cartoon', label: 'Cartoon' },
-                { value: 'semi-realistic', label: 'Semi-Realistic' },
-              ]}
-              value={style}
-              onChange={(value) => setStyle(value as typeof style)}
-              fullWidth
-            />
-
-            <div className="reference-image-generator-textarea-wrapper">
-              <label htmlFor="customPrompt" className="reference-image-generator-label">
+            <div className="form-group">
+              <label htmlFor="customPrompt">
                 Custom Prompt (Optional)
+                <span className="label-hint">Add specific details or modifications</span>
               </label>
               <textarea
                 id="customPrompt"
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="Add additional details for the image generation..."
-                className="reference-image-generator-textarea"
-                rows={3}
+                placeholder="e.g., 'wearing a red jacket', 'smiling', 'with long hair'"
+                rows={4}
+                className="custom-prompt-textarea"
               />
-              <span className="reference-image-generator-hint">
-                The character's appearance and personality will be automatically included
-              </span>
             </div>
 
-            {error && <div className="reference-image-generator-error">{error}</div>}
+            <Button variant="primary" onClick={handleGenerate} className="generate-btn">
+              Generate Reference Image
+            </Button>
+          </div>
+        )}
 
-            {isGenerating && (
-              <ProgressBar
-                value={progress}
-                label="Generating reference image..."
-                showPercentage
-              />
-            )}
-
-            <div className="reference-image-generator-actions">
-              <Button type="button" variant="outline" onClick={handleClose} disabled={isGenerating}>
-                Cancel
-              </Button>
-              <Button onClick={handleGenerate} loading={isGenerating}>
-                {isGenerating ? 'Generating...' : 'Generate'}
-              </Button>
+        {generating && (
+          <div className="generating-state">
+            <div className="spinner"></div>
+            <h3>Generating reference image...</h3>
+            <p>This may take 30-60 seconds</p>
+            <div className="progress-bar">
+              <div className="progress-bar-fill"></div>
             </div>
-          </>
+          </div>
         )}
 
         {generatedImage && (
-          <div className="reference-image-generator-result">
-            <div className="reference-image-generator-preview">
-              {generatedImage.url ? (
-                <img src={generatedImage.url} alt={character.name} />
-              ) : (
-                <div className="reference-image-generator-placeholder">
-                  Image generated successfully
-                </div>
+          <div className="generated-result">
+            <div className="generated-image-container">
+              <img src={generatedImage.url} alt={`Generated reference for ${characterName}`} />
+              <div className="image-status">
+                <span className={`status-badge status-${generatedImage.status}`}>
+                  {generatedImage.status}
+                </span>
+              </div>
+            </div>
+
+            <div className="result-info">
+              <p className="result-meta">
+                <strong>Model Used:</strong> {generatedImage.modelUsed}
+              </p>
+              {generatedImage.prompt && (
+                <p className="result-meta">
+                  <strong>Prompt:</strong> {generatedImage.prompt}
+                </p>
               )}
             </div>
-            <div className="reference-image-generator-result-actions">
-              <Button variant="outline" onClick={handleGenerate}>
+
+            <div className="result-actions">
+              <Button variant="primary" onClick={handleAccept}>
+                Accept & Save
+              </Button>
+              <Button variant="secondary" onClick={handleRegenerate}>
                 Regenerate
               </Button>
-              <Button onClick={handleClose}>
-                Done
+              <Button variant="secondary" onClick={handleReset}>
+                Start Over
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="error-state">
+            <div className="error-icon">⚠️</div>
+            <h3>Generation Failed</h3>
+            <p>{error}</p>
+            <div className="error-actions">
+              <Button variant="primary" onClick={handleGenerate}>
+                Try Again
+              </Button>
+              <Button variant="secondary" onClick={handleReset}>
+                Start Over
               </Button>
             </div>
           </div>

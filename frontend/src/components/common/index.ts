@@ -3,7 +3,6 @@ export { Input } from './Input';
 export { Card, CardHeader, CardBody, CardFooter } from './Card';
 export { LoadingSpinner } from './LoadingSpinner';
 export { Modal } from './Modal';
-export { FloatingAvatar } from './FloatingAvatar';
 export { Select } from './Select';
 export { ErrorMessage } from './ErrorMessage';
 export { EmptyState } from './EmptyState';

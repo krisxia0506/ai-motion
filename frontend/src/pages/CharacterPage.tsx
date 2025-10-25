@@ -1,136 +1,303 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Button, LoadingSpinner, ErrorMessage } from '../components/common';
-import { CharacterList } from '../components/features/character/CharacterList';
-import { CharacterEditor } from '../components/features/character/CharacterEditor';
-import { ReferenceImageGenerator } from '../components/features/character/ReferenceImageGenerator';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { MdAdd, MdPerson } from 'react-icons/md';
 import { useCharacters } from '../hooks/useCharacters';
-import { useCharacterStore } from '../store/characterStore';
-import { characterApi } from '../services/characterApi';
-import type { Character, CreateCharacterRequest, UpdateCharacterRequest, ReferenceImage } from '../types';
-import './CharacterPage.css';
+import { useCharacterStore } from '../store';
+import { characterApi } from '../services';
+import { Character, CreateCharacterRequest, UpdateCharacterRequest } from '../types';
+import { CharacterList } from '../components/features/character';
+import { Modal } from '../components/common/Modal';
+import { Button } from '../components/common/Button';
+import { Input } from '../components/common/Input';
+import { EmptyState } from '../components/common/EmptyState';
+import { CharacterDetailModal } from '../components/features/character/CharacterDetailModal';
+import { ReferenceImageGenerator } from '../components/features/character/ReferenceImageGenerator';
 
-const CharacterPage: React.FC = () => {
-  const { id: novelId } = useParams<{ id: string }>();
-  const { characters, loading, error } = useCharacters(novelId || '');
+function CharacterPage() {
+  const { novelId } = useParams<{ novelId: string }>();
+  const navigate = useNavigate();
+  const { characters, loading, refetch } = useCharacters(novelId || '');
   const { addCharacter, updateCharacter, removeCharacter } = useCharacterStore();
   
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
-  const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
-  const [generatingCharacter, setGeneratingCharacter] = useState<Character | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showReferenceGenerator, setShowReferenceGenerator] = useState(false);
+  const [characterForReference, setCharacterForReference] = useState<Character | null>(null);
+  
+  const [createForm, setCreateForm] = useState<CreateCharacterRequest>({
+    novelId: novelId || '',
+    name: '',
+    type: 'main',
+    appearance: '',
+    personality: '',
+    background: '',
+  });
+  const [creating, setCreating] = useState(false);
 
-  const handleCreate = () => {
-    setEditingCharacter(null);
-    setIsEditorOpen(true);
-  };
-
-  const handleEdit = (character: Character) => {
-    setEditingCharacter(character);
-    setIsEditorOpen(true);
-  };
-
-  const handleSave = async (data: CreateCharacterRequest | UpdateCharacterRequest) => {
-    if (editingCharacter) {
-      const updated = await characterApi.updateCharacter(editingCharacter.id, data as UpdateCharacterRequest);
-      updateCharacter(editingCharacter.id, updated);
-    } else {
-      const created = await characterApi.createCharacter(data as CreateCharacterRequest);
-      addCharacter(created);
-    }
-  };
-
-  const handleDelete = async (characterId: string) => {
-    if (window.confirm('Are you sure you want to delete this character?')) {
-      await characterApi.deleteCharacter(characterId);
-      removeCharacter(characterId);
-    }
-  };
-
-  const handleGenerateImage = (character: Character) => {
-    setGeneratingCharacter(character);
-    setIsGeneratorOpen(true);
-  };
-
-  const handleImageGenerated = (image: ReferenceImage) => {
-    if (generatingCharacter) {
-      const updatedImages = [...(generatingCharacter.referenceImages || []), image];
-      updateCharacter(generatingCharacter.id, { referenceImages: updatedImages });
-    }
-    setIsGeneratorOpen(false);
-    setGeneratingCharacter(null);
-  };
-
-  if (loading) {
+  if (!novelId) {
     return (
-      <div className="character-page">
-        <div className="character-page-loading">
-          <LoadingSpinner />
-          <p>Loading characters...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="character-page">
-        <ErrorMessage
-          title="Failed to load characters"
-          message={error}
-          onRetry={() => window.location.reload()}
+      <div className="container" style={{ padding: '48px 0', textAlign: 'center' }}>
+        <EmptyState
+          title="No Novel Selected"
+          description="Please select a novel to view its characters."
+          actionLabel="Go to Novels"
+          onAction={() => navigate('/novels')}
         />
       </div>
     );
   }
 
+  const handleCreateCharacter = async () => {
+    try {
+      setCreating(true);
+      const response = await characterApi.createCharacter({
+        ...createForm,
+        novelId: novelId,
+      });
+      addCharacter(response.data);
+      setShowCreateModal(false);
+      setCreateForm({
+        novelId: novelId,
+        name: '',
+        type: 'main',
+        appearance: '',
+        personality: '',
+        background: '',
+      });
+      await refetch();
+    } catch (error) {
+      console.error('Failed to create character:', error);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleUpdateCharacter = async (id: string, data: UpdateCharacterRequest) => {
+    try {
+      const response = await characterApi.updateCharacter(id, data);
+      updateCharacter(id, response.data);
+      await refetch();
+    } catch (error) {
+      console.error('Failed to update character:', error);
+    }
+  };
+
+  const handleDeleteCharacter = async (characterId: string) => {
+    if (!window.confirm('Are you sure you want to delete this character?')) {
+      return;
+    }
+
+    try {
+      await characterApi.deleteCharacter(characterId);
+      removeCharacter(characterId);
+      await refetch();
+    } catch (error) {
+      console.error('Failed to delete character:', error);
+    }
+  };
+
+  const handleEdit = (character: Character) => {
+    setSelectedCharacter(character);
+    setShowDetailModal(true);
+  };
+
+  const handleGenerateReference = (character: Character) => {
+    setCharacterForReference(character);
+    setShowReferenceGenerator(true);
+  };
+
+  const handleReferenceGenerated = async () => {
+    setShowReferenceGenerator(false);
+    setCharacterForReference(null);
+    await refetch();
+  };
+
   return (
-    <div className="character-page">
-      <div className="character-page-header">
-        <h1 className="character-page-title">Characters</h1>
-        <Button variant="primary" onClick={handleCreate}>
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ marginRight: '0.5rem' }}
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Create Character
+    <div className="container" style={{ padding: '48px 0' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '32px' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <MdPerson size={32} style={{ color: 'var(--color-primary)' }} />
+          <h1 style={{ margin: 0 }}>Characters</h1>
+        </div>
+        <Button 
+          variant="primary" 
+          onClick={() => setShowCreateModal(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <MdAdd size={20} />
+          Add Character
         </Button>
       </div>
 
-      <CharacterList
-        characters={characters}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onGenerateImage={handleGenerateImage}
-      />
+      {characters.length === 0 && !loading ? (
+        <EmptyState
+          title="No Characters Yet"
+          description="Start by adding characters for your novel. You can extract them from the novel text or create them manually."
+          actionLabel="Add Character"
+          onAction={() => setShowCreateModal(true)}
+        />
+      ) : (
+        <CharacterList
+          characters={characters}
+          loading={loading}
+          onEdit={handleEdit}
+          onGenerateReference={handleGenerateReference}
+          onDelete={handleDeleteCharacter}
+        />
+      )}
 
-      <CharacterEditor
-        character={editingCharacter || undefined}
-        novelId={novelId}
-        isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
-        onSave={handleSave}
-      />
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Character"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+              Name *
+            </label>
+            <Input
+              value={createForm.name}
+              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+              placeholder="Enter character name"
+            />
+          </div>
 
-      {generatingCharacter && (
-        <ReferenceImageGenerator
-          character={generatingCharacter}
-          isOpen={isGeneratorOpen}
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+              Type *
+            </label>
+            <select
+              value={createForm.type}
+              onChange={(e) => setCreateForm({ ...createForm, type: e.target.value as 'main' | 'supporting' | 'minor' })}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                fontSize: '1rem',
+              }}
+            >
+              <option value="main">Main Character</option>
+              <option value="supporting">Supporting Character</option>
+              <option value="minor">Minor Character</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+              Appearance *
+            </label>
+            <textarea
+              value={createForm.appearance}
+              onChange={(e) => setCreateForm({ ...createForm, appearance: e.target.value })}
+              placeholder="Describe the character's physical appearance..."
+              rows={4}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+              Personality *
+            </label>
+            <textarea
+              value={createForm.personality}
+              onChange={(e) => setCreateForm({ ...createForm, personality: e.target.value })}
+              placeholder="Describe the character's personality traits..."
+              rows={4}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+              Background (Optional)
+            </label>
+            <textarea
+              value={createForm.background}
+              onChange={(e) => setCreateForm({ ...createForm, background: e.target.value })}
+              placeholder="Character's backstory and history..."
+              rows={4}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+            <Button 
+              variant="secondary" 
+              onClick={() => setShowCreateModal(false)}
+              disabled={creating}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleCreateCharacter}
+              disabled={creating || !createForm.name || !createForm.appearance || !createForm.personality}
+            >
+              {creating ? 'Creating...' : 'Create Character'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {selectedCharacter && (
+        <CharacterDetailModal
+          isOpen={showDetailModal}
+          character={selectedCharacter}
           onClose={() => {
-            setIsGeneratorOpen(false);
-            setGeneratingCharacter(null);
+            setShowDetailModal(false);
+            setSelectedCharacter(null);
           }}
-          onGenerated={handleImageGenerated}
+          onUpdate={handleUpdateCharacter}
+          onGenerateReference={() => {
+            setCharacterForReference(selectedCharacter);
+            setShowReferenceGenerator(true);
+            setShowDetailModal(false);
+          }}
+        />
+      )}
+
+      {characterForReference && (
+        <ReferenceImageGenerator
+          isOpen={showReferenceGenerator}
+          character={characterForReference}
+          onClose={() => {
+            setShowReferenceGenerator(false);
+            setCharacterForReference(null);
+          }}
+          onGenerated={handleReferenceGenerated}
         />
       )}
     </div>

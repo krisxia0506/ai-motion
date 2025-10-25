@@ -4,15 +4,20 @@ import { Layout } from './components/Layout';
 import { LoadingSpinner } from './components/common';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
-const NovelListPage = lazy(() => import('./pages/NovelListPage.enhanced'));
+const NovelListPage = lazy(() => import('./pages/NovelListPage'));
 const NovelDetailPage = lazy(() => import('./pages/NovelDetailPage'));
+const NovelUploadPage = lazy(() => import('./pages/NovelUploadPage'));
 const CharacterPage = lazy(() => import('./pages/CharacterPage'));
 const GenerationPage = lazy(() => import('./pages/GenerationPage'));
 const ExportPage = lazy(() => import('./pages/ExportPage'));
-const NovelUpload = lazy(() => import('./components/features/novel/NovelUpload').then(m => ({ default: m.NovelUpload })));
 
-const LoadingFallback: React.FC = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+const LoadingFallback = () => (
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    minHeight: '400px' 
+  }}>
     <LoadingSpinner />
   </div>
 );
@@ -27,7 +32,7 @@ const App: React.FC = () => {
             
             <Route path="novels">
               <Route index element={<NovelListPage />} />
-              <Route path="upload" element={<NovelUpload />} />
+              <Route path="upload" element={<NovelUploadPage />} />
               <Route path=":id" element={<NovelDetailPage />} />
               <Route path=":id/characters" element={<CharacterPage />} />
               <Route path=":id/generate" element={<GenerationPage />} />
@@ -37,7 +42,7 @@ const App: React.FC = () => {
             <Route path="characters" element={<CharacterPage />} />
             <Route path="generation" element={<GenerationPage />} />
             <Route path="export" element={<ExportPage />} />
-
+            
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

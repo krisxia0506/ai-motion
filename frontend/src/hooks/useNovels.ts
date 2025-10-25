@@ -1,29 +1,47 @@
-import { useEffect } from 'react';
-import { useNovelStore } from '../store/novelStore';
-import { novelApi } from '../services/novelApi';
+import { useState, useEffect } from 'react';
+import { Novel, ApiError, ListQueryParams, Pagination } from '../types';
+import { novelApi } from '../services';
+import { useNovelStore } from '../store';
 
-export const useNovels = () => {
-  const { novels, loading, error, setNovels, setLoading, setError } = useNovelStore();
+interface UseNovelsResult {
+  novels: Novel[];
+  loading: boolean;
+  error: ApiError | null;
+  pagination: Pagination | null;
+  refetch: () => Promise<void>;
+}
 
-  useEffect(() => {
-    const fetchNovels = async () => {
+export const useNovels = (params?: ListQueryParams): UseNovelsResult => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const { novels, setNovels, setError: setStoreError } = useNovelStore();
+
+  const fetchNovels = async () => {
+    try {
       setLoading(true);
       setError(null);
-      
-      try {
-        const fetchedNovels = await novelApi.listNovels();
-        setNovels(fetchedNovels);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch novels');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (novels.length === 0) {
-      fetchNovels();
+      const response = await novelApi.listNovels(params);
+      setNovels(response.data.data);
+      setPagination(response.data.pagination);
+    } catch (err) {
+      const apiError = err as ApiError;
+      setError(apiError);
+      setStoreError(apiError.message);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
-  return { novels, loading, error };
+  useEffect(() => {
+    fetchNovels();
+  }, [params?.page, params?.pageSize, params?.search, params?.sortBy]);
+
+  return {
+    novels,
+    loading,
+    error,
+    pagination,
+    refetch: fetchNovels,
+  };
 };

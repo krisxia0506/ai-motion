@@ -1,104 +1,49 @@
-import type {
+import { apiClient } from './api';
+import {
   Character,
-  CreateCharacterRequest,
+  GenerateReferenceRequest,
   UpdateCharacterRequest,
-  GenerateReferenceImageRequest,
   ReferenceImage,
+  ApiResponse,
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+export const characterApi = {
+  async getCharactersByNovel(novelId: string): Promise<ApiResponse<Character[]>> {
+    return apiClient.get<Character[]>(`/characters/${novelId}`);
+  },
 
-class CharacterApiService {
-  async getCharactersByNovel(novelId: string): Promise<Character[]> {
-    const response = await fetch(`${API_BASE_URL}/novels/${novelId}/characters`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch characters');
-    }
-    
-    const result = await response.json();
-    return result.data;
-  }
+  async getCharacter(id: string): Promise<ApiResponse<Character>> {
+    return apiClient.get<Character>(`/character/${id}`);
+  },
 
-  async getCharacter(id: string): Promise<Character> {
-    const response = await fetch(`${API_BASE_URL}/characters/${id}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch character');
-    }
-    
-    const result = await response.json();
-    return result.data;
-  }
+  async updateCharacter(
+    id: string,
+    data: UpdateCharacterRequest
+  ): Promise<ApiResponse<Character>> {
+    return apiClient.put<Character>(`/character/${id}`, data);
+  },
 
-  async createCharacter(data: CreateCharacterRequest): Promise<Character> {
-    const response = await fetch(`${API_BASE_URL}/characters`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to create character');
-    }
-    
-    const result = await response.json();
-    return result.data;
-  }
+  async deleteCharacter(id: string): Promise<ApiResponse<void>> {
+    return apiClient.delete<void>(`/character/${id}`);
+  },
 
-  async updateCharacter(id: string, data: UpdateCharacterRequest): Promise<Character> {
-    const response = await fetch(`${API_BASE_URL}/characters/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to update character');
-    }
-    
-    const result = await response.json();
-    return result.data;
-  }
+  async generateReferenceImage(
+    request: GenerateReferenceRequest
+  ): Promise<ApiResponse<ReferenceImage>> {
+    return apiClient.post<ReferenceImage>(
+      `/character/${request.characterId}/generate-reference`,
+      { prompt: request.prompt, style: request.style }
+    );
+  },
 
-  async deleteCharacter(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/characters/${id}`, {
-      method: 'DELETE',
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to delete character');
-    }
-  }
+  async getReferenceImages(characterId: string): Promise<ApiResponse<ReferenceImage[]>> {
+    return apiClient.get<ReferenceImage[]>(`/character/${characterId}/references`);
+  },
 
-  async generateReferenceImage(data: GenerateReferenceImageRequest): Promise<ReferenceImage> {
-    const response = await fetch(`${API_BASE_URL}/characters/${data.characterId}/reference-images`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        style: data.style,
-        customPrompt: data.customPrompt,
-      }),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to generate reference image');
-    }
-    
-    const result = await response.json();
-    return result.data;
-  }
-
-  async getReferenceImageStatus(imageId: string): Promise<ReferenceImage> {
-    const response = await fetch(`${API_BASE_URL}/reference-images/${imageId}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch reference image status');
-    }
-    
-    const result = await response.json();
-    return result.data;
-  }
-}
-
-export const characterApi = new CharacterApiService();
+  async deleteReferenceImage(
+    characterId: string,
+    imageId: string
+  ): Promise<ApiResponse<void>> {
+    return apiClient.delete<void>(`/character/${characterId}/references/${imageId}`);
+  },
+};

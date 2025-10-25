@@ -1,34 +1,45 @@
-import { useEffect, useState } from 'react';
-import { novelApi } from '../services/novelApi';
-import type { Novel } from '../types';
+import { useState, useEffect } from 'react';
+import { Novel, ApiError } from '../types';
+import { novelApi } from '../services';
+import { useNovelStore } from '../store';
 
-export const useNovel = (id: string) => {
-  const [novel, setNovel] = useState<Novel | null>(null);
+interface UseNovelResult {
+  novel: Novel | null;
+  loading: boolean;
+  error: ApiError | null;
+  refetch: () => Promise<void>;
+}
+
+export const useNovel = (id: string): UseNovelResult => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
+  const { selectedNovel, setSelectedNovel, setError: setStoreError } = useNovelStore();
 
-  useEffect(() => {
-    const fetchNovel = async () => {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-
+  const fetchNovel = async () => {
+    try {
       setLoading(true);
       setError(null);
-      
-      try {
-        const fetchedNovel = await novelApi.getNovel(id);
-        setNovel(fetchedNovel);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch novel');
-      } finally {
-        setLoading(false);
-      }
-    };
+      const response = await novelApi.getNovel(id);
+      setSelectedNovel(response.data);
+    } catch (err) {
+      const apiError = err as ApiError;
+      setError(apiError);
+      setStoreError(apiError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchNovel();
+  useEffect(() => {
+    if (id) {
+      fetchNovel();
+    }
   }, [id]);
 
-  return { novel, loading, error };
+  return {
+    novel: selectedNovel,
+    loading,
+    error,
+    refetch: fetchNovel,
+  };
 };

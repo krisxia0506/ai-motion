@@ -1,77 +1,96 @@
 import React, { useState } from 'react';
-import { Input, Select, EmptyState } from '../../common';
+import { Character, CharacterType } from '../../../types';
 import { CharacterCard } from './CharacterCard';
-import type { Character } from '../../../types';
+import { Input } from '../../common/Input';
+import { LoadingSpinner } from '../../common/LoadingSpinner';
 import './CharacterList.css';
 
 interface CharacterListProps {
   characters: Character[];
-  onCharacterClick?: (character: Character) => void;
+  loading?: boolean;
   onEdit?: (character: Character) => void;
+  onGenerateReference?: (character: Character) => void;
   onDelete?: (characterId: string) => void;
-  onGenerateImage?: (character: Character) => void;
 }
+
+const CHARACTER_TYPE_FILTERS: { value: CharacterType | 'all'; label: string }[] = [
+  { value: 'all', label: 'All Characters' },
+  { value: 'main', label: 'Main' },
+  { value: 'supporting', label: 'Supporting' },
+  { value: 'minor', label: 'Minor' },
+];
 
 export const CharacterList: React.FC<CharacterListProps> = ({
   characters,
-  onCharacterClick,
+  loading = false,
   onEdit,
+  onGenerateReference,
   onDelete,
-  onGenerateImage,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<CharacterType | 'all'>('all');
 
   const filteredCharacters = characters.filter((character) => {
-    const matchesSearch = character.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      character.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      character.appearance.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      character.personality.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesType = typeFilter === 'all' || character.type === typeFilter;
+
     return matchesSearch && matchesType;
   });
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
-    <div className="character-list">
+    <div className="character-list-container">
       <div className="character-list-filters">
         <Input
+          type="text"
           placeholder="Search characters..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          fullWidth
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="character-search"
         />
-        <Select
-          options={[
-            { value: 'all', label: 'All Types' },
-            { value: 'main', label: 'Main' },
-            { value: 'supporting', label: 'Supporting' },
-            { value: 'minor', label: 'Minor' },
-          ]}
-          value={typeFilter}
-          onChange={setTypeFilter}
-        />
+
+        <div className="character-type-filters">
+          {CHARACTER_TYPE_FILTERS.map((filter) => (
+            <button
+              key={filter.value}
+              className={`type-filter-btn ${typeFilter === filter.value ? 'active' : ''}`}
+              onClick={() => setTypeFilter(filter.value)}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {filteredCharacters.length > 0 ? (
+      {filteredCharacters.length === 0 ? (
+        <div className="character-list-empty">
+          <p>No characters found</p>
+          {searchQuery && <p>Try adjusting your search or filters</p>}
+        </div>
+      ) : (
         <div className="character-list-grid">
           {filteredCharacters.map((character) => (
             <CharacterCard
               key={character.id}
               character={character}
-              onClick={() => onCharacterClick?.(character)}
-              onEdit={() => onEdit?.(character)}
-              onDelete={() => onDelete?.(character.id)}
-              onGenerateImage={() => onGenerateImage?.(character)}
+              onEdit={onEdit}
+              onGenerateReference={onGenerateReference}
+              onDelete={onDelete}
             />
           ))}
         </div>
-      ) : (
-        <EmptyState
-          title={searchTerm || typeFilter !== 'all' ? 'No characters found' : 'No characters yet'}
-          description={
-            searchTerm || typeFilter !== 'all'
-              ? 'Try adjusting your filters'
-              : 'Characters will appear here once extracted from the novel'
-          }
-        />
       )}
+
+      <div className="character-list-count">
+        Showing {filteredCharacters.length} of {characters.length} characters
+      </div>
     </div>
   );
 };

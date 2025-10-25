@@ -5,47 +5,45 @@
   justify-content: center;
   padding: 3rem 2rem;
   text-align: center;
-  gap: 1rem;
-  min-height: 300px;
 }
 
 .empty-state-icon {
-  color: var(--text-tertiary, #9ca3af);
+  font-size: 4rem;
+  margin-bottom: 1rem;
   opacity: 0.5;
 }
 
 .empty-state-title {
-  font-size: 1.125rem;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary, #1f2937);
-  margin: 0;
+  color: var(--color-text-primary, #1f2937);
 }
 
 .empty-state-description {
+  margin: 0 0 1.5rem 0;
   font-size: 0.875rem;
-  color: var(--text-secondary, #6b7280);
-  margin: 0;
+  color: var(--color-text-secondary, #6b7280);
   max-width: 400px;
   line-height: 1.5;
 }
 
-.empty-state-action {
-  margin-top: 0.5rem;
-  padding: 0.625rem 1.5rem;
-  background-color: var(--color-primary, #3b82f6);
-  color: white;
-  border: none;
-  border-radius: 0.375rem;
+.empty-state-action-btn {
+  padding: 0.625rem 1.25rem;
   font-size: 0.875rem;
   font-weight: 500;
+  color: #ffffff;
+  background-color: var(--color-primary, #3b82f6);
+  border: none;
+  border-radius: var(--border-radius, 0.375rem);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease-in-out;
 }
 
-.empty-state-action:hover {
-  background-color: var(--color-primary-dark, #2563eb);
+.empty-state-action-btn:hover {
+  background-color: var(--color-primary-hover, #2563eb);
 }
 
-.empty-state-action:active {
-  background-color: var(--color-primary-darker, #1d4ed8);
+.empty-state-action-btn:active {
+  background-color: #1d4ed8;
 }
