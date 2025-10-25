@@ -10,9 +10,12 @@ import (
 	"github.com/xiajiayi/ai-motion/internal/domain/character"
 	"github.com/xiajiayi/ai-motion/internal/domain/novel"
 	"github.com/xiajiayi/ai-motion/internal/domain/scene"
+	"github.com/xiajiayi/ai-motion/internal/infrastructure/ai/gemini"
+	"github.com/xiajiayi/ai-motion/internal/infrastructure/ai/sora"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/config"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/database"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/repository/mysql"
+	"github.com/xiajiayi/ai-motion/internal/infrastructure/storage/local"
 	"github.com/xiajiayi/ai-motion/internal/interfaces/http/handler"
 	"github.com/xiajiayi/ai-motion/internal/interfaces/http/middleware"
 )
@@ -26,6 +29,49 @@ func main() {
 	var novelHandler *handler.NovelHandler
 	var characterHandler *handler.CharacterHandler
 	var sceneHandler *handler.SceneHandler
+	var generationHandler *handler.GenerationHandler
+
+	geminiAPIKey := os.Getenv("GEMINI_API_KEY")
+	soraAPIKey := os.Getenv("SORA_API_KEY")
+	storagePath := os.Getenv("STORAGE_PATH")
+	if storagePath == "" {
+		storagePath = "./storage"
+	}
+
+	var geminiClient *gemini.Client
+	var soraClient *sora.Client
+
+	if geminiAPIKey != "" {
+		client, clientErr := gemini.NewClient(geminiAPIKey)
+		if clientErr != nil {
+			log.Printf("Warning: Failed to initialize Gemini client: %v", clientErr)
+		} else {
+			geminiClient = client
+			log.Println("Gemini client initialized")
+		}
+	} else {
+		log.Println("GEMINI_API_KEY not set, AI image generation will be unavailable")
+	}
+
+	if soraAPIKey != "" {
+		client, clientErr := sora.NewClient(soraAPIKey)
+		if clientErr != nil {
+			log.Printf("Warning: Failed to initialize Sora client: %v", clientErr)
+		} else {
+			soraClient = client
+			log.Println("Sora client initialized")
+		}
+	} else {
+		log.Println("SORA_API_KEY not set, AI video generation will be unavailable")
+	}
+
+	fileStorage, storageErr := local.NewFileStorage(storagePath)
+	if storageErr != nil {
+		log.Printf("Warning: Failed to initialize file storage: %v", storageErr)
+	} else {
+		log.Printf("File storage initialized at %s", storagePath)
+		_ = fileStorage
+	}
 
 	if cfg.Database.Host != "" && cfg.Database.Password != "" {
 		dbCfg := &database.Config{
@@ -59,6 +105,7 @@ func main() {
 			chapterRepo := mysql.NewChapterRepository(dbConn)
 			characterRepo := mysql.NewMySQLCharacterRepository(dbConn)
 			sceneRepo := mysql.NewMySQLSceneRepository(dbConn)
+			mediaRepo := mysql.NewMediaRepository(dbConn)
 
 			parserService := novel.NewParserService()
 			novelService := service.NewNovelService(novelRepo, chapterRepo, parserService)
@@ -72,6 +119,14 @@ func main() {
 			promptGeneratorService := scene.NewPromptGeneratorService(sceneRepo)
 			sceneService := service.NewSceneService(sceneRepo, chapterRepo, characterRepo, dividerService, promptGeneratorService)
 			sceneHandler = handler.NewSceneHandler(sceneService)
+
+			if geminiClient != nil && soraClient != nil {
+				generationService := service.NewGenerationService(mediaRepo, sceneRepo, geminiClient, soraClient)
+				generationHandler = handler.NewGenerationHandler(generationService)
+				log.Println("Generation service initialized")
+			} else {
+				log.Println("AI clients not available, generation service disabled")
+			}
 		}
 	} else {
 		log.Println("Database configuration not found, starting without database...")
@@ -141,13 +196,19 @@ func main() {
 			}
 		}
 
-		generate := v1.Group("/generate")
-		{
-			generate.POST("/scene", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{"message": "generate scene endpoint - coming soon"})
-			})
-			generate.POST("/voice", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{"message": "generate voice endpoint - coming soon"})
+		if generationHandler != nil {
+			generateGroup := v1.Group("/generate")
+			{
+				generateGroup.POST("/image", generationHandler.GenerateImage)
+				generateGroup.POST("/video", generationHandler.GenerateVideo)
+				generateGroup.POST("/batch", generationHandler.BatchGenerate)
+				generateGroup.GET("/status/:scene_id", generationHandler.GetStatus)
+			}
+		} else {
+			v1.POST("/generate/image", func(c *gin.Context) {
+				c.JSON(http.StatusServiceUnavailable, gin.H{
+					"error": "AI services not configured",
+				})
 			})
 		}
 
