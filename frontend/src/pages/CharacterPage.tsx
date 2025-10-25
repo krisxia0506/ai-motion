@@ -302,6 +302,6 @@ function CharacterPage() {
       )}
     </div>
   );
-}
+};
 
 export default CharacterPage;

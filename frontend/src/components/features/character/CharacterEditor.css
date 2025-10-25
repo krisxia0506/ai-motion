@@ -1,0 +1,51 @@
+.character-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.character-editor-textarea-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.character-editor-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+}
+
+.character-editor-textarea {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--text-primary, #1f2937);
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.character-editor-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.character-editor-error {
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-danger, #ef4444);
+  border-radius: 0.375rem;
+  color: var(--color-danger, #ef4444);
+  font-size: 0.875rem;
+}
+
+.character-editor-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
