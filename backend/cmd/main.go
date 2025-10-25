@@ -31,7 +31,9 @@ func main() {
 	var sceneHandler *handler.SceneHandler
 	var generationHandler *handler.GenerationHandler
 
+	geminiBaseURL := os.Getenv("GEMINI_BASE_URL")
 	geminiAPIKey := os.Getenv("GEMINI_API_KEY")
+	soraBaseURL := os.Getenv("SORA_BASE_URL")
 	soraAPIKey := os.Getenv("SORA_API_KEY")
 	storagePath := os.Getenv("STORAGE_PATH")
 	if storagePath == "" {
@@ -41,28 +43,28 @@ func main() {
 	var geminiClient *gemini.Client
 	var soraClient *sora.Client
 
-	if geminiAPIKey != "" {
-		client, clientErr := gemini.NewClient(geminiAPIKey)
+	if geminiBaseURL != "" && geminiAPIKey != "" {
+		client, clientErr := gemini.NewClient(geminiBaseURL, geminiAPIKey)
 		if clientErr != nil {
 			log.Printf("Warning: Failed to initialize Gemini client: %v", clientErr)
 		} else {
 			geminiClient = client
-			log.Println("Gemini client initialized")
+			log.Printf("Gemini client initialized (baseURL: %s)", geminiBaseURL)
 		}
 	} else {
-		log.Println("GEMINI_API_KEY not set, AI image generation will be unavailable")
+		log.Println("GEMINI_BASE_URL or GEMINI_API_KEY not set, AI image generation will be unavailable")
 	}
 
-	if soraAPIKey != "" {
-		client, clientErr := sora.NewClient(soraAPIKey)
+	if soraBaseURL != "" && soraAPIKey != "" {
+		client, clientErr := sora.NewClient(soraBaseURL, soraAPIKey)
 		if clientErr != nil {
 			log.Printf("Warning: Failed to initialize Sora client: %v", clientErr)
 		} else {
 			soraClient = client
-			log.Println("Sora client initialized")
+			log.Printf("Sora client initialized (baseURL: %s)", soraBaseURL)
 		}
 	} else {
-		log.Println("SORA_API_KEY not set, AI video generation will be unavailable")
+		log.Println("SORA_BASE_URL or SORA_API_KEY not set, AI video generation will be unavailable")
 	}
 
 	fileStorage, storageErr := local.NewFileStorage(storagePath)

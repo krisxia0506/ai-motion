@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrAPIKeyRequired  = errors.New("sora api key is required")
+	ErrBaseURLRequired = errors.New("sora base url is required")
 	ErrInvalidResponse = errors.New("invalid response from sora api")
 	ErrRateLimited     = errors.New("rate limited by sora api")
 	ErrVideoProcessing = errors.New("video is still processing")
@@ -24,14 +25,17 @@ type Client struct {
 	httpClient *http.Client
 }
 
-func NewClient(apiKey string) (*Client, error) {
+func NewClient(baseURL, apiKey string) (*Client, error) {
 	if apiKey == "" {
 		return nil, ErrAPIKeyRequired
+	}
+	if baseURL == "" {
+		return nil, ErrBaseURLRequired
 	}
 
 	return &Client{
 		apiKey:  apiKey,
-		baseURL: "https://api.openai.com/v1",
+		baseURL: baseURL,
 		httpClient: &http.Client{
 			Timeout: 120 * time.Second,
 		},
@@ -61,16 +65,22 @@ type VideoGenerationResponse struct {
 
 func (c *Client) ImageToVideo(ctx context.Context, req ImageToVideoRequest) (string, error) {
 	payload := map[string]interface{}{
-		"model":  "sora",
 		"prompt": req.Prompt,
-		"image":  req.ImageURL,
+	}
+
+	if req.ImageURL != "" {
+		payload["image"] = req.ImageURL
 	}
 
 	if req.Duration > 0 {
 		payload["duration"] = req.Duration
 	}
 
-	result, err := c.makeRequest(ctx, "videos/generations", payload)
+	if req.Width > 0 && req.Height > 0 {
+		payload["size"] = fmt.Sprintf("%dx%d", req.Width, req.Height)
+	}
+
+	result, err := c.makeRequest(ctx, "videos", payload)
 	if err != nil {
 		return "", err
 	}
@@ -80,7 +90,6 @@ func (c *Client) ImageToVideo(ctx context.Context, req ImageToVideoRequest) (str
 
 func (c *Client) TextToVideo(ctx context.Context, req TextToVideoRequest) (string, error) {
 	payload := map[string]interface{}{
-		"model":  "sora",
 		"prompt": req.Prompt,
 	}
 
@@ -88,7 +97,11 @@ func (c *Client) TextToVideo(ctx context.Context, req TextToVideoRequest) (strin
 		payload["duration"] = req.Duration
 	}
 
-	result, err := c.makeRequest(ctx, "videos/generations", payload)
+	if req.Width > 0 && req.Height > 0 {
+		payload["size"] = fmt.Sprintf("%dx%d", req.Width, req.Height)
+	}
+
+	result, err := c.makeRequest(ctx, "videos", payload)
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +110,7 @@ func (c *Client) TextToVideo(ctx context.Context, req TextToVideoRequest) (strin
 }
 
 func (c *Client) GetVideoStatus(ctx context.Context, videoID string) (*VideoGenerationResponse, error) {
-	url := fmt.Sprintf("%s/videos/generations/%s", c.baseURL, videoID)
+	url := fmt.Sprintf("%s/videos/%s", c.baseURL, videoID)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
