@@ -83,12 +83,25 @@ yarn install
 #### 2. 配置前端环境变量
 
 ```bash
-# 创建 .env 文件
-cat > .env << EOF
-VITE_API_BASE_URL=http://localhost:8080
-VITE_APP_TITLE=AI-Motion
-EOF
+# 复制示例配置文件
+cp .env.example .env
+
+# 编辑配置
+vim .env
 ```
+
+**重要配置项：**
+
+- `VITE_API_BASE_URL`: 后端 API 地址
+  - 本地开发: `http://localhost:8080`
+  - 生产环境: `https://api.your-domain.com`
+- `VITE_API_TIMEOUT`: API 请求超时时间（毫秒）
+- `VITE_SUPABASE_URL`: Supabase 项目 URL
+- `VITE_SUPABASE_ANON_KEY`: Supabase 匿名密钥
+
+**环境变量说明：**
+- 前端使用环境变量配置 API Base URL，支持本地开发和生产环境分离
+- 确保在部署到生产环境时更新 `VITE_API_BASE_URL` 为实际的后端 API 地址
 
 #### 3. 启动前端开发服务器
 

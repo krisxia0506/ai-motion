@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdUploadFile, MdAutoAwesome, MdPerson, MdMovie, MdVolumeUp, MdEdit } from 'react-icons/md';
 import { Button, Card, CardBody } from '../components/common';
+import { apiClient } from '../services/api';
 import './HomePage.css';
 
 type InputMode = 'file' | 'text';
@@ -66,25 +67,13 @@ function HomePage() {
         content = textContent;
       }
 
-      const response = await fetch('/api/v1/manga/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title,
-          author: author || 'Unknown',
-          content,
-        }),
+      const response = await apiClient.post<{ novel_id: string }>('/manga/generate', {
+        title,
+        author: author || 'Unknown',
+        content,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.details || '生成失败');
-      }
-
-      const data = await response.json();
-      navigate(`/novels/${data.data.novel_id}`);
+      navigate(`/novels/${response.data.novel_id}`);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('生成失败');
       setError(error.message);

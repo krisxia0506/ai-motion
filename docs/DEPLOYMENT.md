@@ -540,7 +540,9 @@ vercel deploy --prod
 
 ## 环境配置详解
 
-### 必需的环境变量
+### 后端环境变量
+
+在项目根目录的 `.env` 文件中配置：
 
 ```bash
 # 数据库配置
@@ -572,6 +574,39 @@ JWT_SECRET=your-jwt-secret-key-here
 # CORS 配置
 CORS_ALLOWED_ORIGINS=https://your-domain.com
 ```
+
+### 前端环境变量
+
+在 `frontend/.env` 文件中配置：
+
+```bash
+# API 配置
+# 本地开发环境
+VITE_API_BASE_URL=http://localhost:8080
+# 生产环境示例
+# VITE_API_BASE_URL=https://api.your-domain.com
+
+VITE_API_TIMEOUT=30000
+
+# 上传配置
+VITE_UPLOAD_MAX_SIZE=52428800  # 50MB
+
+# 功能开关
+VITE_ENABLE_PREVIEW=true
+VITE_ENABLE_EXPORT=true
+
+# Supabase 配置
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+**重要说明：**
+
+- **前后端分离部署**: 前端通过 `VITE_API_BASE_URL` 环境变量配置后端 API 地址
+- **本地开发**: 使用 `http://localhost:8080`
+- **生产环境**: 使用实际的后端 API 域名，例如 `https://api.your-domain.com`
+- **Docker 部署**: 如果前后端在同一容器网络，可以使用容器服务名
+- **Vercel/Netlify 部署**: 在部署平台的环境变量设置中配置 `VITE_API_BASE_URL`
 
 ### 配置文件示例
 

@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Button, ProgressBar, ErrorMessage } from '../../common';
+import { apiClient } from '../../../services/api';
 import type { Novel } from '../../../types';
 import './NovelUpload.css';
 
@@ -128,30 +129,17 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
-      const response = await fetch('/api/v1/manga/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title,
-          author: author || 'Unknown',
-          content,
-        }),
+      const response = await apiClient.post<Novel>('/manga/generate', {
+        title,
+        author: author || 'Unknown',
+        content,
       });
 
       clearInterval(progressInterval);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.details || 'Generation failed');
-      }
-
-      const data = await response.json();
       setUploadProgress(100);
 
       setTimeout(() => {
-        onUploadSuccess?.(data.data);
+        onUploadSuccess?.(response.data);
         setFile(null);
         setTitle('');
         setAuthor('');
