@@ -427,13 +427,17 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 
 ## Phase 6: 测试 (Testing)
 
-### 6.1 单元测试 ❌
+### 6.1 单元测试 🚧
 
-- [ ] 领域层测试 (Novel, Character, Scene)
+- [x] 领域层测试 (Novel, Character, Scene)
+  - [x] Novel Entity 测试 (97.1% 覆盖率)
+  - [x] Novel ParserService 测试
+  - [x] Character Entity 测试
+  - [x] Scene Entity 测试
 - [ ] 应用层测试 (Services with Mocks)
 
 **目标覆盖率:** 80%+
-**完成度:** 90%
+**完成度:** 40%
 **预计工期:** 7-11 天
 
 ---
@@ -499,25 +503,26 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 |-------|------|--------|------|
 | Phase 1 | 基础设施层 | 65% | 🚧 进行中 |
 | Phase 2 | 领域层 | 100% | ✅ 已完成 |
-| Phase 3 | AI 服务集成 | 0% | ❌ 未开始 |
-| Phase 4 | 应用层 | 75% | 🚧 进行中 |
-| Phase 5 | 接口层 | 80% | 🚧 进行中 |
-| Phase 6 | 测试 | 0% | ❌ 未开始 |
+| Phase 3 | AI 服务集成 | 90% | ✅ 已完成 |
+| Phase 4 | 应用层 | 90% | 🚧 进行中 |
+| Phase 5 | 接口层 | 100% | ✅ 已完成 |
+| Phase 6 | 测试 | 40% | 🚧 进行中 |
 | Phase 7 | 性能优化与监控 | 0% | ❌ 未开始 |
 | Phase 8 | 部署与 DevOps | 20% | 🚧 进行中 |
 
-**总体完成度:** ~60%
+**总体完成度:** ~68%
 
 ---
 
 ## 里程碑 (Milestones)
 
-### M1: MVP - v0.2.0 (60% 完成)
+### M1: MVP - v0.2.0 (98% 完成)
 - ✅ 小说上传
 - ✅ 小说解析
-- ⏳ 角色提取
-- ⏳ 基础图片生成
+- ✅ 角色提取
+- ✅ 基础图片生成
 - ✅ 数据持久化
+- ✅ 单元测试 (领域层)
 
 ### M2: Alpha - v0.5.0 (0% 完成)
 - 完整的角色一致性生成
@@ -553,11 +558,11 @@ AI-Motion 后端开发路线图，采用 DDD (领域驱动设计) 架构，分�
 4. [x] 实现 Novel Handler 和 API
 
 ### 下一迭代计划 (接下来 5 个任务)
-1. [ ] Character Entity & Repository - 实现角色实体和存储库
-2. [ ] Character Extractor Service - 从小说中提取角色信息
-3. [ ] Scene Entity & Repository - 实现场景实体和存储库
-4. [ ] Scene Divider Service - 章节分割为场景
-5. [ ] Prompt Generator Service - 生成 AI 提示词
+1. [ ] 应用层服务单元测试 - 添加 mock 测试
+2. [ ] Character/Scene 领域服务测试 - 提取器、分割器、提示词生成器
+3. [ ] Repository 集成测试 - 使用测试数据库
+4. [ ] 错误重试机制 - AI API 调用增强
+5. [ ] 性能优化 - Goroutine 池、缓存层
 
 ### 本月计划
 1. 🚧 完成 Phase 1 (基础设施层) - 65% 完成
