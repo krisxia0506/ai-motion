@@ -117,8 +117,9 @@ func (m *AuthMiddleware) SupabaseAuth() gin.HandlerFunc {
 
 		log.Printf("[AUTH] Authentication successful for user: %s", userID)
 
-		// 5. 将用户ID存入上下文
+		// 5. 将用户ID和JWT Token存入上下文
 		c.Set("user_id", userID)
+		c.Set("jwt_token", tokenString) // Store the JWT token for Supabase RLS
 		if email, ok := claims["email"].(string); ok {
 			c.Set("user_email", email)
 		}
@@ -147,4 +148,19 @@ func GetUserID(c *gin.Context) (string, bool) {
 func GetUserIDFromContext(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value("user_id").(string)
 	return userID, ok
+}
+
+// GetJWTToken 从上下文中获取JWT Token
+func GetJWTToken(c *gin.Context) (string, bool) {
+	token, exists := c.Get("jwt_token")
+	if !exists {
+		return "", false
+	}
+	return token.(string), true
+}
+
+// GetJWTTokenFromContext 从标准 Context 中获取JWT Token
+func GetJWTTokenFromContext(ctx context.Context) (string, bool) {
+	token, ok := ctx.Value("jwt_token").(string)
+	return token, ok
 }

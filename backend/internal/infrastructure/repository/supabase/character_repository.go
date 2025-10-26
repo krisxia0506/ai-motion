@@ -41,7 +41,7 @@ func (r *CharacterRepository) Save(ctx context.Context, char *character.Characte
 		"updated_at":          char.UpdatedAt,
 	}
 
-	_, _, err = r.client.From("characters").Upsert(data, "", "", "").Execute()
+	_, _, err = r.client.From("aimotion_character").Upsert(data, "", "", "").Execute()
 	if err != nil {
 		return fmt.Errorf("failed to save character: %w", err)
 	}
@@ -52,7 +52,7 @@ func (r *CharacterRepository) Save(ctx context.Context, char *character.Characte
 func (r *CharacterRepository) FindByID(ctx context.Context, id character.CharacterID) (*character.Character, error) {
 	var results []map[string]interface{}
 
-	_, err := r.client.From("characters").
+	_, err := r.client.From("aimotion_character").
 		Select("*", "", false).
 		Eq("id", string(id)).
 		ExecuteTo(&results)
@@ -71,7 +71,7 @@ func (r *CharacterRepository) FindByID(ctx context.Context, id character.Charact
 func (r *CharacterRepository) FindByNovelID(ctx context.Context, novelID string) ([]*character.Character, error) {
 	var results []map[string]interface{}
 
-	_, err := r.client.From("characters").
+	_, err := r.client.From("aimotion_character").
 		Select("*", "", false).
 		Eq("novel_id", novelID).
 		Order("role", &postgrest.OrderOpts{Ascending: true}).
@@ -96,7 +96,7 @@ func (r *CharacterRepository) FindByNovelID(ctx context.Context, novelID string)
 func (r *CharacterRepository) FindByName(ctx context.Context, novelID, name string) (*character.Character, error) {
 	var results []map[string]interface{}
 
-	_, err := r.client.From("characters").
+	_, err := r.client.From("aimotion_character").
 		Select("*", "", false).
 		Eq("novel_id", novelID).
 		Eq("name", name).
@@ -114,7 +114,7 @@ func (r *CharacterRepository) FindByName(ctx context.Context, novelID, name stri
 }
 
 func (r *CharacterRepository) Delete(ctx context.Context, id character.CharacterID) error {
-	_, _, err := r.client.From("characters").
+	_, _, err := r.client.From("aimotion_character").
 		Delete("", "").
 		Eq("id", string(id)).
 		Execute()
@@ -127,7 +127,7 @@ func (r *CharacterRepository) Delete(ctx context.Context, id character.Character
 }
 
 func (r *CharacterRepository) DeleteByNovelID(ctx context.Context, novelID string) error {
-	_, _, err := r.client.From("characters").
+	_, _, err := r.client.From("aimotion_character").
 		Delete("", "").
 		Eq("novel_id", novelID).
 		Execute()

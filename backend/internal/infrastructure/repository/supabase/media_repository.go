@@ -36,7 +36,7 @@ func (r *MediaRepository) Save(ctx context.Context, m *media.Media) error {
 		"completed_at":   m.CompletedAt,
 	}
 
-	_, _, err := r.client.From("media").Upsert(data, "", "", "").Execute()
+	_, _, err := r.client.From("aimotion_media").Upsert(data, "", "", "").Execute()
 	if err != nil {
 		return fmt.Errorf("failed to save media: %w", err)
 	}
@@ -47,7 +47,7 @@ func (r *MediaRepository) Save(ctx context.Context, m *media.Media) error {
 func (r *MediaRepository) FindByID(ctx context.Context, id media.MediaID) (*media.Media, error) {
 	var results []map[string]interface{}
 
-	_, err := r.client.From("media").
+	_, err := r.client.From("aimotion_media").
 		Select("*", "", false).
 		Eq("id", string(id)).
 		ExecuteTo(&results)
@@ -66,7 +66,7 @@ func (r *MediaRepository) FindByID(ctx context.Context, id media.MediaID) (*medi
 func (r *MediaRepository) FindBySceneID(ctx context.Context, sceneID string) ([]*media.Media, error) {
 	var results []map[string]interface{}
 
-	_, err := r.client.From("media").
+	_, err := r.client.From("aimotion_media").
 		Select("*", "", false).
 		Eq("scene_id", sceneID).
 		Order("created_at", &postgrest.OrderOpts{Ascending: false}).
@@ -96,7 +96,7 @@ func (r *MediaRepository) UpdateStatus(ctx context.Context, id media.MediaID, st
 		"updated_at":    time.Now(),
 	}
 
-	_, _, err := r.client.From("media").
+	_, _, err := r.client.From("aimotion_media").
 		Update(data, "", "").
 		Eq("id", string(id)).
 		Execute()
@@ -109,7 +109,7 @@ func (r *MediaRepository) UpdateStatus(ctx context.Context, id media.MediaID, st
 }
 
 func (r *MediaRepository) Delete(ctx context.Context, id media.MediaID) error {
-	_, _, err := r.client.From("media").
+	_, _, err := r.client.From("aimotion_media").
 		Delete("", "").
 		Eq("id", string(id)).
 		Execute()
@@ -124,7 +124,7 @@ func (r *MediaRepository) Delete(ctx context.Context, id media.MediaID) error {
 func (r *MediaRepository) FindPendingMedia(ctx context.Context, limit int) ([]*media.Media, error) {
 	var results []map[string]interface{}
 
-	_, err := r.client.From("media").
+	_, err := r.client.From("aimotion_media").
 		Select("*", "", false).
 		Eq("status", string(media.MediaStatusPending)).
 		Order("created_at", &postgrest.OrderOpts{Ascending: true}).

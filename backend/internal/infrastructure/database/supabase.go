@@ -16,10 +16,15 @@ func NewSupabaseClient(cfg *SupabaseConfig) (*postgrest.Client, error) {
 		return nil, fmt.Errorf("supabase URL is required")
 	}
 
-	client := postgrest.NewClient(cfg.URL, cfg.APIKey, nil)
+	// NewClient takes (url, schema, headers)
+	// We need to set the API key via SetApiKey method
+	client := postgrest.NewClient(cfg.URL, "", nil)
 	if client.ClientError != nil {
 		return nil, fmt.Errorf("failed to create supabase client: %w", client.ClientError)
 	}
+
+	// Set the service role API key
+	client = client.SetApiKey(cfg.APIKey)
 
 	return client, nil
 }

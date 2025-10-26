@@ -50,7 +50,7 @@ func (r *SceneRepository) Save(ctx context.Context, s *scene.Scene) error {
 		"updated_at":   s.UpdatedAt,
 	}
 
-	_, _, err = r.client.From("scenes").Upsert(data, "", "", "").Execute()
+	_, _, err = r.client.From("aimotion_scene").Upsert(data, "", "", "").Execute()
 	if err != nil {
 		return fmt.Errorf("failed to save scene: %w", err)
 	}
@@ -61,7 +61,7 @@ func (r *SceneRepository) Save(ctx context.Context, s *scene.Scene) error {
 func (r *SceneRepository) FindByID(ctx context.Context, id scene.SceneID) (*scene.Scene, error) {
 	var results []map[string]interface{}
 
-	_, err := r.client.From("scenes").
+	_, err := r.client.From("aimotion_scene").
 		Select("*", "", false).
 		Eq("id", string(id)).
 		ExecuteTo(&results)
@@ -80,7 +80,7 @@ func (r *SceneRepository) FindByID(ctx context.Context, id scene.SceneID) (*scen
 func (r *SceneRepository) FindByChapterID(ctx context.Context, chapterID string) ([]*scene.Scene, error) {
 	var results []map[string]interface{}
 
-	_, err := r.client.From("scenes").
+	_, err := r.client.From("aimotion_scene").
 		Select("*", "", false).
 		Eq("chapter_id", chapterID).
 		Order("scene_number", &postgrest.OrderOpts{Ascending: true}).
@@ -105,7 +105,7 @@ func (r *SceneRepository) FindByChapterID(ctx context.Context, chapterID string)
 func (r *SceneRepository) FindByNovelID(ctx context.Context, novelID string) ([]*scene.Scene, error) {
 	var results []map[string]interface{}
 
-	_, err := r.client.From("scenes").
+	_, err := r.client.From("aimotion_scene").
 		Select("*", "", false).
 		Eq("novel_id", novelID).
 		Order("scene_number", &postgrest.OrderOpts{Ascending: true}).
@@ -128,7 +128,7 @@ func (r *SceneRepository) FindByNovelID(ctx context.Context, novelID string) ([]
 }
 
 func (r *SceneRepository) Delete(ctx context.Context, id scene.SceneID) error {
-	_, _, err := r.client.From("scenes").
+	_, _, err := r.client.From("aimotion_scene").
 		Delete("", "").
 		Eq("id", string(id)).
 		Execute()
@@ -141,7 +141,7 @@ func (r *SceneRepository) Delete(ctx context.Context, id scene.SceneID) error {
 }
 
 func (r *SceneRepository) DeleteByChapterID(ctx context.Context, chapterID string) error {
-	_, _, err := r.client.From("scenes").
+	_, _, err := r.client.From("aimotion_scene").
 		Delete("", "").
 		Eq("chapter_id", chapterID).
 		Execute()
@@ -193,7 +193,7 @@ func (r *SceneRepository) BatchSave(ctx context.Context, scenes []*scene.Scene) 
 		})
 	}
 
-	_, _, err := r.client.From("scenes").Upsert(data, "", "", "").Execute()
+	_, _, err := r.client.From("aimotion_scene").Upsert(data, "", "", "").Execute()
 	if err != nil {
 		return fmt.Errorf("failed to batch save scenes: %w", err)
 	}

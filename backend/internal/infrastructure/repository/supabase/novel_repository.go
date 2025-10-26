@@ -3,6 +3,7 @@ package supabase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	postgrest "github.com/supabase-community/postgrest-go"
 	"github.com/xiajiayi/ai-motion/internal/domain/novel"
@@ -14,6 +15,22 @@ type NovelRepository struct {
 
 func NewNovelRepository(client *postgrest.Client) novel.NovelRepository {
 	return &NovelRepository{client: client}
+}
+
+// getClientWithAuth returns a client with JWT token from context if available
+func (r *NovelRepository) getClientWithAuth(ctx context.Context) *postgrest.Client {
+	// Try to get JWT token from context
+	if jwtToken, ok := ctx.Value("jwt_token").(string); ok && jwtToken != "" {
+		log.Printf("[NovelRepo] Using user JWT token for authentication (length: %d)", len(jwtToken))
+		// SetAuthToken creates a new client with Authorization header
+		// The apikey should be preserved from the original client
+		authClient := r.client.SetAuthToken(jwtToken)
+		log.Printf("[NovelRepo] Auth client created, ClientError: %v", authClient.ClientError)
+		return authClient
+	}
+	// Fallback to service role client
+	log.Printf("[NovelRepo] No JWT token in context, using service role client")
+	return r.client
 }
 
 func (r *NovelRepository) Save(ctx context.Context, n *novel.Novel) error {
@@ -29,7 +46,8 @@ func (r *NovelRepository) Save(ctx context.Context, n *novel.Novel) error {
 		"updated_at":    n.UpdatedAt,
 	}
 
-	_, _, err := r.client.From("novels").Upsert(data, "", "", "").Execute()
+	client := r.getClientWithAuth(ctx)
+	_, _, err := client.From("aimotion_novel").Upsert(data, "", "", "").Execute()
 	if err != nil {
 		return fmt.Errorf("failed to save novel: %w", err)
 	}
@@ -40,7 +58,8 @@ func (r *NovelRepository) Save(ctx context.Context, n *novel.Novel) error {
 func (r *NovelRepository) FindByID(ctx context.Context, id novel.NovelID) (*novel.Novel, error) {
 	var novels []novel.Novel
 
-	_, err := r.client.From("novels").
+	client := r.getClientWithAuth(ctx)
+	_, err := client.From("aimotion_novel").
 		Select("*", "", false).
 		Eq("id", string(id)).
 		ExecuteTo(&novels)
@@ -59,7 +78,8 @@ func (r *NovelRepository) FindByID(ctx context.Context, id novel.NovelID) (*nove
 func (r *NovelRepository) FindAll(ctx context.Context, offset, limit int) ([]*novel.Novel, error) {
 	var novels []*novel.Novel
 
-	_, err := r.client.From("novels").
+	client := r.getClientWithAuth(ctx)
+	_, err := client.From("aimotion_novel").
 		Select("*", "", false).
 		Range(offset, offset+limit-1, "").
 		Order("created_at", &postgrest.OrderOpts{Ascending: false}).
@@ -73,7 +93,8 @@ func (r *NovelRepository) FindAll(ctx context.Context, offset, limit int) ([]*no
 }
 
 func (r *NovelRepository) Delete(ctx context.Context, id novel.NovelID) error {
-	_, _, err := r.client.From("novels").
+	client := r.getClientWithAuth(ctx)
+	_, _, err := client.From("aimotion_novel").
 		Delete("", "").
 		Eq("id", string(id)).
 		Execute()
@@ -88,7 +109,8 @@ func (r *NovelRepository) Delete(ctx context.Context, id novel.NovelID) error {
 func (r *NovelRepository) Count(ctx context.Context) (int, error) {
 	var novels []novel.Novel
 
-	count, err := r.client.From("novels").
+	client := r.getClientWithAuth(ctx)
+	count, err := client.From("aimotion_novel").
 		Select("id", "exact", false).
 		ExecuteTo(&novels)
 

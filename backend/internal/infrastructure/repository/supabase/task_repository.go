@@ -20,6 +20,20 @@ func NewTaskRepository(client *postgrest.Client) task.Repository {
 	}
 }
 
+// getClientWithAuth returns a client with JWT token from context if available
+func (r *TaskRepository) getClientWithAuth(ctx context.Context) *postgrest.Client {
+	// Try to get JWT token from context
+	if jwtToken, ok := ctx.Value("jwt_token").(string); ok && jwtToken != "" {
+		// Create a new client instance with the user's JWT token
+		// SetAuthToken returns a new client with the Authorization header set
+		// We need to ensure apikey is also set
+		authClient := r.client.SetAuthToken(jwtToken)
+		return authClient
+	}
+	// Fallback to service role client
+	return r.client
+}
+
 // taskRecord Supabase中的任务记录结构
 type taskRecord struct {
 	ID                 string          `json:"id"`
@@ -75,7 +89,8 @@ func (r *TaskRepository) Save(ctx context.Context, t *task.Task) error {
 	}
 
 	// 使用 upsert（如果ID存在则更新，否则插入）
-	_, _, err = r.client.From("tasks").
+	client := r.getClientWithAuth(ctx)
+	_, _, err = client.From("aimotion_task").
 		Upsert(record, "", "", "").
 		Execute()
 
@@ -90,7 +105,8 @@ func (r *TaskRepository) Save(ctx context.Context, t *task.Task) error {
 func (r *TaskRepository) FindByID(ctx context.Context, taskID string) (*task.Task, error) {
 	var records []taskRecord
 
-	_, err := r.client.From("tasks").
+	client := r.getClientWithAuth(ctx)
+	_, err := client.From("aimotion_task").
 		Select("*", "", false).
 		Eq("id", taskID).
 		Single().
@@ -111,7 +127,8 @@ func (r *TaskRepository) FindByID(ctx context.Context, taskID string) (*task.Tas
 func (r *TaskRepository) FindByIDAndUserID(ctx context.Context, taskID, userID string) (*task.Task, error) {
 	var records []taskRecord
 
-	_, err := r.client.From("tasks").
+	client := r.getClientWithAuth(ctx)
+	_, err := client.From("aimotion_task").
 		Select("*", "", false).
 		Eq("id", taskID).
 		Eq("user_id", userID).
@@ -135,7 +152,8 @@ func (r *TaskRepository) FindByUserID(ctx context.Context, userID string, page, 
 	offset := (page - 1) * pageSize
 
 	// 构建查询
-	query := r.client.From("tasks").
+	client := r.getClientWithAuth(ctx)
+	query := client.From("aimotion_task").
 		Select("*", "exact", false).
 		Eq("user_id", userID)
 
@@ -169,7 +187,8 @@ func (r *TaskRepository) FindByUserID(ctx context.Context, userID string, page, 
 
 // Delete 删除任务
 func (r *TaskRepository) Delete(ctx context.Context, taskID string) error {
-	_, _, err := r.client.From("tasks").
+	client := r.getClientWithAuth(ctx)
+	_, _, err := client.From("aimotion_task").
 		Delete("", "").
 		Eq("id", taskID).
 		Execute()

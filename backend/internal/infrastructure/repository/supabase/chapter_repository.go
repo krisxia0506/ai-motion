@@ -28,7 +28,7 @@ func (r *ChapterRepository) Save(ctx context.Context, chapter *novel.Chapter) er
 		"updated_at":     chapter.UpdatedAt,
 	}
 
-	_, _, err := r.client.From("chapters").Upsert(data, "", "", "").Execute()
+	_, _, err := r.client.From("aimotion_chapter").Upsert(data, "", "", "").Execute()
 	if err != nil {
 		return fmt.Errorf("failed to save chapter: %w", err)
 	}
@@ -55,7 +55,7 @@ func (r *ChapterRepository) SaveBatch(ctx context.Context, chapters []novel.Chap
 		})
 	}
 
-	_, _, err := r.client.From("chapters").Upsert(data, "", "", "").Execute()
+	_, _, err := r.client.From("aimotion_chapter").Upsert(data, "", "", "").Execute()
 	if err != nil {
 		return fmt.Errorf("failed to save batch chapters: %w", err)
 	}
@@ -66,7 +66,7 @@ func (r *ChapterRepository) SaveBatch(ctx context.Context, chapters []novel.Chap
 func (r *ChapterRepository) FindByNovelID(ctx context.Context, novelID novel.NovelID) ([]novel.Chapter, error) {
 	var chapters []novel.Chapter
 
-	_, err := r.client.From("chapters").
+	_, err := r.client.From("aimotion_chapter").
 		Select("*", "", false).
 		Eq("novel_id", string(novelID)).
 		Order("chapter_number", &postgrest.OrderOpts{Ascending: true}).
@@ -82,7 +82,7 @@ func (r *ChapterRepository) FindByNovelID(ctx context.Context, novelID novel.Nov
 func (r *ChapterRepository) FindByID(ctx context.Context, id string) (*novel.Chapter, error) {
 	var chapters []novel.Chapter
 
-	_, err := r.client.From("chapters").
+	_, err := r.client.From("aimotion_chapter").
 		Select("*", "", false).
 		Eq("id", id).
 		ExecuteTo(&chapters)
@@ -99,7 +99,7 @@ func (r *ChapterRepository) FindByID(ctx context.Context, id string) (*novel.Cha
 }
 
 func (r *ChapterRepository) DeleteByNovelID(ctx context.Context, novelID novel.NovelID) error {
-	_, _, err := r.client.From("chapters").
+	_, _, err := r.client.From("aimotion_chapter").
 		Delete("", "").
 		Eq("novel_id", string(novelID)).
 		Execute()

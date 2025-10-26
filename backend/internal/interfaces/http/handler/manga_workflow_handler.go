@@ -45,7 +45,7 @@ func (h *MangaWorkflowHandler) GenerateManga(c *gin.Context) {
 		"content_length", len(req.Content),
 	)
 
-	// 2. 获取当前用户ID
+	// 2. 获取当前用户ID和JWT Token
 	userID, exists := middleware.GetUserID(c)
 	if !exists {
 		slog.Warn("Unauthorized request - no user ID found",
@@ -59,13 +59,17 @@ func (h *MangaWorkflowHandler) GenerateManga(c *gin.Context) {
 		return
 	}
 
+	// 获取JWT Token并添加到context中
+	jwtToken, _ := middleware.GetJWTToken(c)
+	ctx := context.WithValue(c.Request.Context(), "jwt_token", jwtToken)
+
 	slog.Info("Creating manga task",
 		"user_id", userID,
 		"title", req.Title,
 	)
 
 	// 3. 创建任务
-	task, err := h.workflowService.CreateTask(c.Request.Context(), userID, &req)
+	task, err := h.workflowService.CreateTask(ctx, userID, &req)
 	if err != nil {
 		slog.Error("Failed to create task",
 			"error", err,
