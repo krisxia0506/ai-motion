@@ -686,7 +686,9 @@ export const NovelCard: React.FC<NovelCardProps> = ({ novel }) => {
 ```css
 /* src/styles/variables.css */
 :root {
-  --color-primary: #3b82f6;
+  --color-primary: #2FB2F1;        /* Cyan blue - brand color */
+  --color-primary-hover: #1E9DD8;
+  --color-primary-light: #E0F7FF;
   --color-secondary: #10b981;
   --color-danger: #ef4444;
   --color-text: #1f2937;
