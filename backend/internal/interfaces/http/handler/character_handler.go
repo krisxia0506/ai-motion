@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/xiajiayi/ai-motion/internal/application/dto"
 	"github.com/xiajiayi/ai-motion/internal/application/service"
+	"github.com/xiajiayi/ai-motion/internal/interfaces/http/response"
 )
 
 type CharacterHandler struct {
@@ -21,16 +20,11 @@ func (h *CharacterHandler) Extract(c *gin.Context) {
 
 	characters, err := h.characterService.ExtractCharacters(c.Request.Context(), novelID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to extract characters",
-			"details": err.Error(),
-		})
+		response.AIServiceError(c, "Failed to extract characters: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": characters,
-	})
+	response.Success(c, characters)
 }
 
 func (h *CharacterHandler) Get(c *gin.Context) {
@@ -38,16 +32,11 @@ func (h *CharacterHandler) Get(c *gin.Context) {
 
 	character, err := h.characterService.GetCharacter(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error":   "Character not found",
-			"details": err.Error(),
-		})
+		response.ResourceNotFound(c, "Character not found: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": character,
-	})
+	response.Success(c, character)
 }
 
 func (h *CharacterHandler) ListByNovel(c *gin.Context) {
@@ -55,16 +44,11 @@ func (h *CharacterHandler) ListByNovel(c *gin.Context) {
 
 	characters, err := h.characterService.GetCharactersByNovelID(c.Request.Context(), novelID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to list characters",
-			"details": err.Error(),
-		})
+		response.InternalError(c, "Failed to list characters: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": characters,
-	})
+	response.Success(c, characters)
 }
 
 func (h *CharacterHandler) Update(c *gin.Context) {
@@ -73,41 +57,28 @@ func (h *CharacterHandler) Update(c *gin.Context) {
 	var req dto.UpdateCharacterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request",
-			"details": err.Error(),
-		})
+		response.InvalidParams(c, "Invalid request: "+err.Error())
 		return
 	}
 
 	character, err := h.characterService.UpdateCharacter(c.Request.Context(), id, &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to update character",
-			"details": err.Error(),
-		})
+		response.InternalError(c, "Failed to update character: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": character,
-	})
+	response.Success(c, character)
 }
 
 func (h *CharacterHandler) Delete(c *gin.Context) {
 	id := c.Param("id")
 
 	if err := h.characterService.DeleteCharacter(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to delete character",
-			"details": err.Error(),
-		})
+		response.InternalError(c, "Failed to delete character: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Character deleted successfully",
-	})
+	response.SuccessWithMessage(c, "Character deleted successfully", nil)
 }
 
 func (h *CharacterHandler) Merge(c *gin.Context) {
@@ -118,22 +89,14 @@ func (h *CharacterHandler) Merge(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request",
-			"details": err.Error(),
-		})
+		response.InvalidParams(c, "Invalid request: "+err.Error())
 		return
 	}
 
 	if err := h.characterService.MergeCharacters(c.Request.Context(), req.NovelID, req.SourceID, req.TargetID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to merge characters",
-			"details": err.Error(),
-		})
+		response.InternalError(c, "Failed to merge characters: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Characters merged successfully",
-	})
+	response.SuccessWithMessage(c, "Characters merged successfully", nil)
 }

@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/xiajiayi/ai-motion/internal/application/dto"
 	"github.com/xiajiayi/ai-motion/internal/application/service"
+	"github.com/xiajiayi/ai-motion/internal/interfaces/http/response"
 )
 
 type SceneHandler struct {
@@ -21,16 +20,11 @@ func (h *SceneHandler) DivideChapter(c *gin.Context) {
 
 	scenes, err := h.sceneService.DivideChapter(c.Request.Context(), chapterID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to divide chapter into scenes",
-			"details": err.Error(),
-		})
+		response.AIServiceError(c, "Failed to divide chapter into scenes: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": scenes,
-	})
+	response.Success(c, scenes)
 }
 
 func (h *SceneHandler) Get(c *gin.Context) {
@@ -38,16 +32,11 @@ func (h *SceneHandler) Get(c *gin.Context) {
 
 	scene, err := h.sceneService.GetScene(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error":   "Scene not found",
-			"details": err.Error(),
-		})
+		response.ResourceNotFound(c, "Scene not found: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": scene,
-	})
+	response.Success(c, scene)
 }
 
 func (h *SceneHandler) ListByChapter(c *gin.Context) {
@@ -55,16 +44,11 @@ func (h *SceneHandler) ListByChapter(c *gin.Context) {
 
 	scenes, err := h.sceneService.GetScenesByChapterID(c.Request.Context(), chapterID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to list scenes",
-			"details": err.Error(),
-		})
+		response.InternalError(c, "Failed to list scenes: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": scenes,
-	})
+	response.Success(c, scenes)
 }
 
 func (h *SceneHandler) ListByNovel(c *gin.Context) {
@@ -72,79 +56,53 @@ func (h *SceneHandler) ListByNovel(c *gin.Context) {
 
 	scenes, err := h.sceneService.GetScenesByNovelID(c.Request.Context(), novelID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to list scenes",
-			"details": err.Error(),
-		})
+		response.InternalError(c, "Failed to list scenes: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": scenes,
-	})
+	response.Success(c, scenes)
 }
 
 func (h *SceneHandler) GeneratePrompt(c *gin.Context) {
 	var req dto.GenerateScenePromptRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request",
-			"details": err.Error(),
-		})
+		response.InvalidParams(c, "Invalid request: "+err.Error())
 		return
 	}
 
-	response, err := h.sceneService.GeneratePrompt(c.Request.Context(), &req)
+	result, err := h.sceneService.GeneratePrompt(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to generate prompt",
-			"details": err.Error(),
-		})
+		response.AIServiceError(c, "Failed to generate prompt: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": response,
-	})
+	response.Success(c, result)
 }
 
 func (h *SceneHandler) GenerateBatchPrompts(c *gin.Context) {
 	var req dto.GeneratePromptsRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request",
-			"details": err.Error(),
-		})
+		response.InvalidParams(c, "Invalid request: "+err.Error())
 		return
 	}
 
 	if err := h.sceneService.GenerateBatchPrompts(c.Request.Context(), &req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to generate batch prompts",
-			"details": err.Error(),
-		})
+		response.AIServiceError(c, "Failed to generate batch prompts: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Batch prompts generated successfully",
-	})
+	response.SuccessWithMessage(c, "Batch prompts generated successfully", nil)
 }
 
 func (h *SceneHandler) Delete(c *gin.Context) {
 	id := c.Param("id")
 
 	if err := h.sceneService.DeleteScene(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to delete scene",
-			"details": err.Error(),
-		})
+		response.InternalError(c, "Failed to delete scene: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Scene deleted successfully",
-	})
+	response.SuccessWithMessage(c, "Scene deleted successfully", nil)
 }

@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/xiajiayi/ai-motion/internal/application/dto"
 	"github.com/xiajiayi/ai-motion/internal/application/service"
+	"github.com/xiajiayi/ai-motion/internal/interfaces/http/response"
 )
 
 type GenerationHandler struct {
@@ -21,94 +20,63 @@ func NewGenerationHandler(generationService *service.GenerationService) *Generat
 func (h *GenerationHandler) GenerateImage(c *gin.Context) {
 	var req dto.GenerateImageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request",
-			"details": err.Error(),
-		})
+		response.InvalidParams(c, "Invalid request: "+err.Error())
 		return
 	}
 
 	result, err := h.generationService.GenerateSceneImage(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to generate image",
-			"details": err.Error(),
-		})
+		response.GenerationError(c, "Failed to generate image: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": result,
-	})
+	response.Success(c, result)
 }
 
 func (h *GenerationHandler) GenerateVideo(c *gin.Context) {
 	var req dto.GenerateVideoRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request",
-			"details": err.Error(),
-		})
+		response.InvalidParams(c, "Invalid request: "+err.Error())
 		return
 	}
 
 	result, err := h.generationService.GenerateSceneVideo(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to generate video",
-			"details": err.Error(),
-		})
+		response.GenerationError(c, "Failed to generate video: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": result,
-	})
+	response.Success(c, result)
 }
 
 func (h *GenerationHandler) BatchGenerate(c *gin.Context) {
 	var req dto.BatchGenerateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request",
-			"details": err.Error(),
-		})
+		response.InvalidParams(c, "Invalid request: "+err.Error())
 		return
 	}
 
 	result, err := h.generationService.BatchGenerateScenes(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to batch generate",
-			"details": err.Error(),
-		})
+		response.GenerationError(c, "Failed to batch generate: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": result,
-	})
+	response.Success(c, result)
 }
 
 func (h *GenerationHandler) GetStatus(c *gin.Context) {
 	sceneID := c.Param("scene_id")
 	if sceneID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "scene_id is required",
-		})
+		response.InvalidParams(c, "scene_id is required")
 		return
 	}
 
 	result, err := h.generationService.GetGenerationStatus(c.Request.Context(), sceneID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get status",
-			"details": err.Error(),
-		})
+		response.InternalError(c, "Failed to get status: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": result,
-	})
+	response.Success(c, result)
 }
