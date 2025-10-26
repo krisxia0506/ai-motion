@@ -3,8 +3,8 @@ package supabase
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/supabase-community/postgrest-go"
 	"github.com/xiajiayi/ai-motion/internal/domain/task"
@@ -27,10 +27,12 @@ func (r *TaskRepository) getClientWithAuth(ctx context.Context) *postgrest.Clien
 		// Create a new client instance with the user's JWT token
 		// SetAuthToken returns a new client with the Authorization header set
 		// We need to ensure apikey is also set
+		slog.Info("[TaskRepo] Using user JWT token for authentication", "token_length", len(jwtToken))
 		authClient := r.client.SetAuthToken(jwtToken)
 		return authClient
 	}
 	// Fallback to service role client
+	slog.Warn("[TaskRepo] Fallback to service role client - no JWT token in context")
 	return r.client
 }
 
@@ -103,29 +105,27 @@ func (r *TaskRepository) Save(ctx context.Context, t *task.Task) error {
 
 // FindByID 根据ID查找任务
 func (r *TaskRepository) FindByID(ctx context.Context, taskID string) (*task.Task, error) {
-	var records []taskRecord
+	var record taskRecord
 
 	client := r.getClientWithAuth(ctx)
 	_, err := client.From("aimotion_task").
 		Select("*", "", false).
 		Eq("id", taskID).
 		Single().
-		ExecuteTo(&records)
+		ExecuteTo(&record)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to find task: %w", err)
 	}
 
-	if len(records) == 0 {
-		return nil, errors.New("task not found")
-	}
-
-	return r.recordToTask(&records[0])
+	return r.recordToTask(&record)
 }
 
 // FindByIDAndUserID 根据ID和用户ID查找任务（用于权限验证）
 func (r *TaskRepository) FindByIDAndUserID(ctx context.Context, taskID, userID string) (*task.Task, error) {
-	var records []taskRecord
+	var record taskRecord
+
+	slog.Info("[TaskRepo] FindByIDAndUserID", "task_id", taskID, "user_id", userID)
 
 	client := r.getClientWithAuth(ctx)
 	_, err := client.From("aimotion_task").
@@ -133,17 +133,16 @@ func (r *TaskRepository) FindByIDAndUserID(ctx context.Context, taskID, userID s
 		Eq("id", taskID).
 		Eq("user_id", userID).
 		Single().
-		ExecuteTo(&records)
+		ExecuteTo(&record)
 
 	if err != nil {
+		slog.Error("[TaskRepo] FindByIDAndUserID - Query error", "error", err, "task_id", taskID, "user_id", userID)
 		return nil, fmt.Errorf("failed to find task: %w", err)
 	}
 
-	if len(records) == 0 {
-		return nil, errors.New("task not found or access denied")
-	}
+	slog.Info("[TaskRepo] FindByIDAndUserID - Query success", "task_id", record.ID)
 
-	return r.recordToTask(&records[0])
+	return r.recordToTask(&record)
 }
 
 // FindByUserID 查询用户的所有任务（分页）

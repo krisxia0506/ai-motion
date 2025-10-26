@@ -128,8 +128,12 @@ func (h *MangaWorkflowHandler) GetTaskStatus(c *gin.Context) {
 		return
 	}
 
+	// 获取JWT Token并添加到context中
+	jwtToken, _ := middleware.GetJWTToken(c)
+	ctx := context.WithValue(c.Request.Context(), "jwt_token", jwtToken)
+
 	// 3. 获取任务状态
-	taskStatus, err := h.workflowService.GetTaskStatus(c.Request.Context(), userID, taskID)
+	taskStatus, err := h.workflowService.GetTaskStatus(ctx, userID, taskID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"code":    10002,
@@ -173,8 +177,12 @@ func (h *MangaWorkflowHandler) GetTaskList(c *gin.Context) {
 		pageSize = 20
 	}
 
+	// 获取JWT Token并添加到context中
+	jwtToken, _ := middleware.GetJWTToken(c)
+	ctx := context.WithValue(c.Request.Context(), "jwt_token", jwtToken)
+
 	// 3. 获取任务列表
-	tasks, pagination, err := h.workflowService.GetTaskList(c.Request.Context(), userID, page, pageSize, status)
+	tasks, pagination, err := h.workflowService.GetTaskList(ctx, userID, page, pageSize, status)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    50001,
@@ -219,8 +227,12 @@ func (h *MangaWorkflowHandler) CancelTask(c *gin.Context) {
 		return
 	}
 
+	// 获取JWT Token并添加到context中
+	jwtToken, _ := middleware.GetJWTToken(c)
+	ctx := context.WithValue(c.Request.Context(), "jwt_token", jwtToken)
+
 	// 3. 取消任务
-	err := h.workflowService.CancelTask(c.Request.Context(), userID, taskID)
+	err := h.workflowService.CancelTask(ctx, userID, taskID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    10001,
