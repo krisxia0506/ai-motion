@@ -48,8 +48,8 @@ AI-Motion 采用 **DDD (领域驱动设计)** 架构模式,将系统按照业务
 │                                                              │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
 │  │Repository│  │AI Services│  │Storage   │  │External  │   │
-│  │  MySQL   │  │ Gemini   │  │  MinIO   │  │  APIs    │   │
-│  │          │  │  Sora2   │  │          │  │          │   │
+│  │ Supabase │  │ Gemini   │  │  MinIO   │  │  APIs    │   │
+│  │(PostgREST)│  │  Sora2   │  │          │  │          │   │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -341,7 +341,7 @@ func (h *NovelHandler) Upload(c *gin.Context) {
 ```
 internal/infrastructure/
 ├── repository/
-│   ├── mysql/
+│   ├── supabase/
 │   │   ├── novel_repository.go
 │   │   ├── character_repository.go
 │   │   ├── scene_repository.go
@@ -368,29 +368,34 @@ internal/infrastructure/
 **仓储实现示例**:
 
 ```go
-type MySQLNovelRepository struct {
-    db *sql.DB
+type SupabaseNovelRepository struct {
+    client *postgrest.Client
 }
 
-func (r *MySQLNovelRepository) Save(ctx context.Context, novel *domain.Novel) error {
-    query := `INSERT INTO novels (id, title, author, content, status, created_at)
-              VALUES (?, ?, ?, ?, ?, ?)`
-    _, err := r.db.ExecContext(ctx, query,
-        novel.ID, novel.Title, novel.Author, novel.Content, novel.Status, novel.CreatedAt)
+func (r *SupabaseNovelRepository) Save(ctx context.Context, novel *domain.Novel) error {
+    _, _, err := r.client.From("aimotion_novel").
+        Upsert(novel, "", "", "*").
+        Execute()
     return err
 }
 
-func (r *MySQLNovelRepository) FindByID(ctx context.Context, id domain.NovelID) (*domain.Novel, error) {
-    query := `SELECT id, title, author, content, status, created_at FROM novels WHERE id = ?`
-    row := r.db.QueryRowContext(ctx, query, id)
-
-    var novel domain.Novel
-    err := row.Scan(&novel.ID, &novel.Title, &novel.Author, &novel.Content, &novel.Status, &novel.CreatedAt)
+func (r *SupabaseNovelRepository) FindByID(ctx context.Context, id domain.NovelID) (*domain.Novel, error) {
+    var novels []domain.Novel
+    _, _, err := r.client.From("aimotion_novel").
+        Select("*", "exact", false).
+        Eq("id", string(id)).
+        Single().
+        Execute(&novels)
+    
     if err != nil {
         return nil, err
     }
+    
+    if len(novels) == 0 {
+        return nil, domain.ErrNovelNotFound
+    }
 
-    return &novel, nil
+    return &novels[0], nil
 }
 ```
 

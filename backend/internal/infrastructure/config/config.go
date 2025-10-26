@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	Supabase SupabaseConfig
 }
 
 type ServerConfig struct {
@@ -21,6 +22,11 @@ type DatabaseConfig struct {
 	User     string
 	Password string
 	Database string
+}
+
+type SupabaseConfig struct {
+	URL    string
+	APIKey string
 }
 
 func Load() (*Config, error) {
@@ -39,6 +45,10 @@ func Load() (*Config, error) {
 			User:     getEnv("DB_USER", "root"),
 			Password: getEnv("DB_PASSWORD", ""),
 			Database: getEnv("DB_NAME", "ai_motion"),
+		},
+		Supabase: SupabaseConfig{
+			URL:    getEnv("SUPABASE_URL", ""),
+			APIKey: getEnv("SUPABASE_API_KEY", ""),
 		},
 	}, nil
 }

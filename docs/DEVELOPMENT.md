@@ -10,7 +10,7 @@
 
 - **Go**: 1.24 或更高版本
 - **Node.js**: 20 或更高版本
-- **MySQL**: 8.0 或更高版本
+- **Supabase**: PostgreSQL 数据库 (代替 MySQL)
 - **Git**: 用于版本控制
 - **Docker**: 20+ (可选，推荐)
 
@@ -326,57 +326,33 @@ export const novelApi = {
 
 ## 数据库设计
 
+**注意**: AI-Motion 已迁移至 Supabase (PostgreSQL + PostgREST)。不再使用 MySQL。
+
 ### 主要表结构
 
-**novels 表**:
+详细的表结构请参考 [DATABASE_DESIGN_STANDARDS.md](./DATABASE_DESIGN_STANDARDS.md) 和 [`database/schema/`](../database/schema/) 目录。
+
+**aimotion_novel 表** (示例):
 ```sql
-CREATE TABLE novels (
-    id VARCHAR(36) PRIMARY KEY,
+CREATE TABLE aimotion_novel (
+    id BIGSERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     author VARCHAR(100),
-    content TEXT,
-    status ENUM('uploaded', 'parsing', 'completed', 'failed'),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    status SMALLINT DEFAULT 0 CHECK (status IN (0, 1, 2)),
+    is_deleted SMALLINT DEFAULT 0 CHECK (is_deleted IN (0, 1)),
+    gmt_create TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    gmt_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-```
 
-**characters 表**:
-```sql
-CREATE TABLE characters (
-    id VARCHAR(36) PRIMARY KEY,
-    novel_id VARCHAR(36) NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    reference_image_url VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
-);
-```
-
-**scenes 表**:
-```sql
-CREATE TABLE scenes (
-    id VARCHAR(36) PRIMARY KEY,
-    novel_id VARCHAR(36) NOT NULL,
-    chapter_id VARCHAR(36),
-    description TEXT,
-    image_url VARCHAR(500),
-    sequence INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
-);
+COMMENT ON TABLE aimotion_novel IS '小说表';
+COMMENT ON COLUMN aimotion_novel.status IS '状态:0-草稿,1-解析中,2-已完成';
 ```
 
 ### 数据库迁移
 
-```bash
-# 创建新迁移
-# (未来版本将使用 golang-migrate 或类似工具)
+数据库迁移文件位于 `backend/internal/infrastructure/database/migrations/`。
 
-# 手动执行 SQL
-docker-compose exec mysql mysql -u ai_motion -p ai_motion < migrations/001_create_tables.sql
-```
+Supabase 使用 PostgREST 自动生成 REST API,在 Supabase Dashboard 中执行 SQL 迁移即可创建表结构。
 
 ---
 

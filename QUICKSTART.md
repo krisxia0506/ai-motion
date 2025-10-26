@@ -13,7 +13,7 @@
 ### 方式二: 本地开发
 - Go 1.24+
 - Node.js 20+
-- MySQL 8.0+ (可选,用于数据持久化)
+- Supabase 账号 (用于 PostgreSQL 数据库)
 
 ## 方式一: Docker 部署 (推荐)
 
