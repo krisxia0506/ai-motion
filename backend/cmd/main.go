@@ -14,6 +14,7 @@ import (
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/ai/sora"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/config"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/database"
+	"github.com/xiajiayi/ai-motion/internal/infrastructure/repository/memory"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/repository/supabase"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/storage/local"
 	"github.com/xiajiayi/ai-motion/internal/interfaces/http/handler"
@@ -30,6 +31,7 @@ func main() {
 	var characterHandler *handler.CharacterHandler
 	var sceneHandler *handler.SceneHandler
 	var generationHandler *handler.GenerationHandler
+	var asyncMangaHandler *handler.AsyncMangaHandler
 
 	geminiBaseURL := os.Getenv("GEMINI_BASE_URL")
 	geminiAPIKey := os.Getenv("GEMINI_API_KEY")
@@ -94,6 +96,8 @@ func main() {
 			sceneRepo := supabase.NewSceneRepository(supabaseClient)
 			mediaRepo := supabase.NewMediaRepository(supabaseClient)
 
+			taskRepo := memory.NewTaskRepository()
+
 			parserService := novel.NewParserService()
 			novelService := service.NewNovelService(novelRepo, chapterRepo, parserService)
 			novelHandler = handler.NewNovelHandler(novelService)
@@ -106,6 +110,22 @@ func main() {
 			promptGeneratorService := scene.NewPromptGeneratorService(sceneRepo)
 			sceneService := service.NewSceneService(sceneRepo, chapterRepo, characterRepo, dividerService, promptGeneratorService)
 			sceneHandler = handler.NewSceneHandler(sceneService)
+
+			if geminiClient != nil {
+				asyncMangaService := service.NewAsyncMangaService(
+					taskRepo,
+					novelRepo,
+					chapterRepo,
+					characterRepo,
+					sceneRepo,
+					parserService,
+					extractorService,
+					dividerService,
+					geminiClient,
+				)
+				asyncMangaHandler = handler.NewAsyncMangaHandler(asyncMangaService)
+				log.Println("Async manga service initialized")
+			}
 
 			if geminiClient != nil && soraClient != nil {
 				generationService := service.NewGenerationService(mediaRepo, sceneRepo, geminiClient, soraClient)
@@ -202,6 +222,20 @@ func main() {
 		v1.POST("/anime/:id/export", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"message": "export anime endpoint - coming soon"})
 		})
+
+		if asyncMangaHandler != nil {
+			mangaGroup := v1.Group("/manga")
+			{
+				mangaGroup.POST("/generate", asyncMangaHandler.Generate)
+				mangaGroup.GET("/tasks/:task_id", asyncMangaHandler.GetTaskStatus)
+			}
+		} else {
+			v1.POST("/manga/generate", func(c *gin.Context) {
+				c.JSON(http.StatusServiceUnavailable, gin.H{
+					"error": "Gemini AI service not configured",
+				})
+			})
+		}
 	}
 
 	serverAddr := ":" + cfg.Server.Port

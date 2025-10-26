@@ -33,3 +33,23 @@ type ChapterResponse struct {
 	WordCount     int       `json:"word_count"`
 	CreatedAt     time.Time `json:"created_at"`
 }
+
+type GenerateMangaRequest struct {
+	Title   string `json:"title" binding:"required"`
+	Author  string `json:"author" binding:"required"`
+	Content string `json:"content" binding:"required,min=100,max=5000"`
+}
+
+type TaskResponse struct {
+	TaskID      string                 `json:"task_id"`
+	Type        string                 `json:"type"`
+	Status      string                 `json:"status"`
+	Progress    int                    `json:"progress"`
+	Message     string                 `json:"message,omitempty"`
+	Result      map[string]interface{} `json:"result,omitempty"`
+	Error       string                 `json:"error,omitempty"`
+	CreatedAt   time.Time              `json:"created_at"`
+	UpdatedAt   time.Time              `json:"updated_at"`
+	StartedAt   *time.Time             `json:"started_at,omitempty"`
+	CompletedAt *time.Time             `json:"completed_at,omitempty"`
+}
