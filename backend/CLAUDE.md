@@ -320,11 +320,18 @@ func (r *SupabaseNovelRepository) FindByID(ctx context.Context, id domain.NovelI
 // internal/interfaces/http/handler/novel_handler.go
 package handler
 
+import (
+    "github.com/gin-gonic/gin"
+    "github.com/xiajiayi/ai-motion/internal/application/dto"
+    "github.com/xiajiayi/ai-motion/internal/application/service"
+    "github.com/xiajiayi/ai-motion/internal/interfaces/http/response"
+)
+
 type NovelHandler struct {
-    novelService *application.NovelService
+    novelService *service.NovelService
 }
 
-func NewNovelHandler(novelService *application.NovelService) *NovelHandler {
+func NewNovelHandler(novelService *service.NovelService) *NovelHandler {
     return &NovelHandler{novelService: novelService}
 }
 
@@ -332,34 +339,102 @@ func (h *NovelHandler) Upload(c *gin.Context) {
     var req dto.UploadNovelRequest
 
     if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{
-            "error": "Invalid request",
-            "details": err.Error(),
-        })
-        return
-    }
-
-    // Validate request
-    if req.Title == "" || req.Content == "" {
-        c.JSON(http.StatusBadRequest, gin.H{
-            "error": "Title and content are required",
-        })
+        response.InvalidParams(c, "Invalid request: "+err.Error())
         return
     }
 
     // Call application service
     novel, err := h.novelService.UploadAndParse(c.Request.Context(), &req)
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "error": "Failed to upload novel",
-            "details": err.Error(),
-        })
+        response.InternalError(c, "Failed to upload novel: "+err.Error())
         return
     }
 
-    c.JSON(http.StatusOK, gin.H{
-        "data": novel,
-    })
+    response.Success(c, novel)
+}
+```
+
+### Unified Response Helpers
+
+**IMPORTANT**: Always use the response helpers from `internal/interfaces/http/response` package. Never manually create `gin.H{}` responses.
+
+**Available Response Helpers:**
+
+```go
+import "github.com/xiajiayi/ai-motion/internal/interfaces/http/response"
+
+// Success responses
+response.Success(c, data)                              // Standard success with data
+response.SuccessWithMessage(c, "Custom message", data) // Success with custom message
+response.SuccessList(c, items, page, pageSize, total)  // Paginated list response
+
+// Error responses
+response.InvalidParams(c, "message")      // Code 10001 - Parameter validation errors
+response.ResourceNotFound(c, "message")   // Code 10002 - Resource not found
+response.FileParseError(c, "message")     // Code 30002 - File parsing errors
+response.AIServiceError(c, "message")     // Code 40001 - AI service failures
+response.GenerationError(c, "message")    // Code 40003 - Generation task failures
+response.DatabaseError(c, "message")      // Code 50001 - Database operation errors
+response.InternalError(c, "message")      // Code 50002 - Internal server errors
+
+// Generic error with custom code
+response.Error(c, code, message)
+response.ErrorWithData(c, code, message, data)
+```
+
+**Response Structure:**
+All responses follow the unified format:
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {}
+}
+```
+
+**Example Usage:**
+
+```go
+func (h *Handler) GetItem(c *gin.Context) {
+    id := c.Param("id")
+    
+    // Validate parameters
+    if id == "" {
+        response.InvalidParams(c, "id parameter is required")
+        return
+    }
+    
+    // Call service
+    item, err := h.service.GetItem(c.Request.Context(), id)
+    if err != nil {
+        if errors.Is(err, domain.ErrNotFound) {
+            response.ResourceNotFound(c, "Item not found")
+            return
+        }
+        response.InternalError(c, "Failed to get item: "+err.Error())
+        return
+    }
+    
+    // Return success
+    response.Success(c, item)
+}
+```
+
+**Pagination Example:**
+
+```go
+func (h *Handler) ListItems(c *gin.Context) {
+    page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+    pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+    
+    items, total, err := h.service.ListItems(c.Request.Context(), page, pageSize)
+    if err != nil {
+        response.InternalError(c, "Failed to list items: "+err.Error())
+        return
+    }
+    
+    // Automatically includes pagination metadata
+    response.SuccessList(c, items, page, pageSize, total)
 }
 ```
 
