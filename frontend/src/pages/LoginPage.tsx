@@ -37,7 +37,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-cyan-50 to-sky-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-blue-100">
+      <div className="w-full max-w-sm space-y-6 bg-white p-8 rounded-2xl shadow-xl border border-blue-100">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 mb-4">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
 
-        <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)}>
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 p-4">
               <div className="flex items-center">
@@ -70,9 +70,9 @@ const LoginPage: React.FC = () => {
             </div>
           )}
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
                 邮箱地址
               </label>
               <Input
@@ -81,7 +81,6 @@ const LoginPage: React.FC = () => {
                 autoComplete="email"
                 placeholder="请输入邮箱地址"
                 {...register('email')}
-                className="w-full"
               />
               {errors.email && (
                 <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -94,7 +93,7 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
                 密码
               </label>
               <Input
@@ -103,7 +102,6 @@ const LoginPage: React.FC = () => {
                 autoComplete="current-password"
                 placeholder="请输入密码"
                 {...register('password')}
-                className="w-full"
               />
               {errors.password && (
                 <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -116,11 +114,11 @@ const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1">
             <Button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3 px-4 text-base font-semibold rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full flex justify-center py-2.5 px-4 text-sm font-medium rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-200"
             >
               {loading ? (
                 <>
