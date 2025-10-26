@@ -46,6 +46,5 @@ temp/
 models/
 
 # 依赖
-go.sum
 yarn.lock
 pnpm-lock.yaml
