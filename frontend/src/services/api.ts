@@ -1,4 +1,5 @@
 import type { ApiResponse, ApiError } from '../types';
+import { supabase } from '../lib/supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const API_VERSION = '/api/v1';
@@ -21,7 +22,10 @@ export class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const token = localStorage.getItem('auth_token');
+      // 从 Supabase 获取 Token
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -100,7 +104,10 @@ export class ApiClient {
       });
     }
 
-    const token = localStorage.getItem('auth_token');
+    // 从 Supabase 获取 Token
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
     const headers: Record<string, string> = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;

@@ -14,6 +14,9 @@ const GenerationPage = lazy(() => import('./pages/GenerationPage'));
 const ExportPage = lazy(() => import('./pages/ExportPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const TaskListPage = lazy(() => import('./pages/TaskListPage'));
+const TaskDetailPage = lazy(() => import('./pages/TaskDetailPage'));
+const CreateMangaPage = lazy(() => import('./pages/CreateMangaPage'));
 
 const LoadingFallback = () => (
   <div style={{ 
@@ -50,7 +53,11 @@ const App: React.FC = () => {
               <Route path="characters" element={<ProtectedRoute><CharacterPage /></ProtectedRoute>} />
               <Route path="generation" element={<ProtectedRoute><GenerationPage /></ProtectedRoute>} />
               <Route path="export" element={<ProtectedRoute><ExportPage /></ProtectedRoute>} />
-              
+
+              <Route path="tasks" element={<ProtectedRoute><TaskListPage /></ProtectedRoute>} />
+              <Route path="task/:taskId" element={<ProtectedRoute><TaskDetailPage /></ProtectedRoute>} />
+              <Route path="create" element={<ProtectedRoute><CreateMangaPage /></ProtectedRoute>} />
+
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
