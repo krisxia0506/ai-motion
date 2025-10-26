@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { taskApi, type TaskStatus } from '../services/taskApi';
+import { toDataUri } from '../utils/imageUtils';
 import {
   MdArrowBack,
   MdCheckCircle,
@@ -279,12 +280,12 @@ const TaskDetailPage: React.FC = () => {
                     <div
                       key={char.id}
                       className="group bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
-                      onClick={() => char.reference_image_url && setSelectedImage(char.reference_image_url)}
+                      onClick={() => char.reference_image_url && setSelectedImage(toDataUri(char.reference_image_url))}
                     >
                       {char.reference_image_url && (
                         <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
                           <img
-                            src={char.reference_image_url}
+                            src={toDataUri(char.reference_image_url)}
                             alt={char.name}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                           />
@@ -321,13 +322,13 @@ const TaskDetailPage: React.FC = () => {
                           <p className="text-gray-700 mb-3 leading-relaxed">{scene.description}</p>
                           {scene.image_url && (
                             <div
-                              className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
-                              onClick={() => setSelectedImage(scene.image_url!)}
+                              className="relative rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
+                              onClick={() => setSelectedImage(toDataUri(scene.image_url!))}
                             >
                               <img
-                                src={scene.image_url}
+                                src={toDataUri(scene.image_url)}
                                 alt={`Scene ${scene.sequence_num}`}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-300"
                               />
                             </div>
                           )}

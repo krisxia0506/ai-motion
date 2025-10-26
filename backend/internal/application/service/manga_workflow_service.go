@@ -153,8 +153,8 @@ func (s *MangaWorkflowService) stepGenerateMangaImages(ctx context.Context, t *t
 			return fmt.Errorf("failed to generate manga image %d: %w", i+1, err)
 		}
 
-		// 保存 Media 实体
-		mediaEntity := media.NewMedia(fmt.Sprintf("%s-panel-%d", n.ID, i+1), media.MediaTypeImage)
+		// 保存 Media 实体（使用 NewMediaForNovel 关联小说）
+		mediaEntity := media.NewMediaForNovel(string(n.ID), media.MediaTypeImage)
 		metadata := media.NewImageMetadata(1344, 768, "image/jpeg", 0)
 		mediaEntity.MarkCompleted(imageURL, metadata)
 
@@ -420,23 +420,24 @@ func (s *MangaWorkflowService) buildTaskResult(ctx context.Context, t *task.Task
 		return nil, err
 	}
 
-	// 加载生成的漫画图片
-	// 使用 novel ID 作为前缀查找所有相关的 media
-	var mangaImages []dto.TaskSceneResponse
-	for i := 1; i <= 10; i++ {
-		mediaID := fmt.Sprintf("%s-panel-%d", t.NovelID, i)
-		mediaEntity, err := s.mediaRepo.FindByID(ctx, media.MediaID(mediaID))
-		if err != nil {
-			log.Printf("Media not found for panel %d: %v", i, err)
-			continue
-		}
+	// 使用 FindByNovelID 查询所有关联的媒体文件
+	mediaList, err := s.mediaRepo.FindByNovelID(ctx, t.NovelID)
+	if err != nil {
+		log.Printf("Failed to find media by novel ID: %v", err)
+		return nil, err
+	}
 
-		mangaImages = append(mangaImages, dto.TaskSceneResponse{
-			ID:          string(mediaEntity.ID),
-			SequenceNum: i,
-			Description: fmt.Sprintf("漫画面板 %d", i),
-			ImageURL:    mediaEntity.URL,
-		})
+	// 构建漫画图片响应
+	var mangaImages []dto.TaskSceneResponse
+	for i, mediaEntity := range mediaList {
+		if mediaEntity.Status == media.MediaStatusCompleted {
+			mangaImages = append(mangaImages, dto.TaskSceneResponse{
+				ID:          string(mediaEntity.ID),
+				SequenceNum: i + 1,
+				Description: fmt.Sprintf("漫画面板 %d", i+1),
+				ImageURL:    mediaEntity.URL,
+			})
+		}
 	}
 
 	return &dto.TaskResultResponse{

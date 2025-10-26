@@ -20,10 +20,11 @@ func NewMediaRepository(db *sql.DB) media.MediaRepository {
 func (r *MediaRepository) Save(ctx context.Context, m *media.Media) error {
 	query := `
 		INSERT INTO media (
-			id, scene_id, type, status, url, width, height, duration,
+			id, novel_id, scene_id, type, status, url, width, height, duration,
 			format, file_size, generation_id, error_message, created_at, updated_at, completed_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
+			novel_id = VALUES(novel_id),
 			status = VALUES(status),
 			url = VALUES(url),
 			width = VALUES(width),
@@ -38,7 +39,7 @@ func (r *MediaRepository) Save(ctx context.Context, m *media.Media) error {
 	`
 
 	_, err := r.db.ExecContext(ctx, query,
-		m.ID, m.SceneID, m.Type, m.Status, m.URL,
+		m.ID, m.NovelID, m.SceneID, m.Type, m.Status, m.URL,
 		m.Metadata.Width, m.Metadata.Height, m.Metadata.Duration,
 		m.Metadata.Format, m.Metadata.FileSize,
 		m.GenerationID, m.ErrorMessage,
@@ -54,7 +55,7 @@ func (r *MediaRepository) Save(ctx context.Context, m *media.Media) error {
 
 func (r *MediaRepository) FindByID(ctx context.Context, id media.MediaID) (*media.Media, error) {
 	query := `
-		SELECT id, scene_id, type, status, url, width, height, duration,
+		SELECT id, novel_id, scene_id, type, status, url, width, height, duration,
 			   format, file_size, generation_id, error_message, created_at, updated_at, completed_at
 		FROM media
 		WHERE id = ?
@@ -62,9 +63,10 @@ func (r *MediaRepository) FindByID(ctx context.Context, id media.MediaID) (*medi
 
 	var m media.Media
 	var completedAt sql.NullTime
+	var novelID, sceneID sql.NullString
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&m.ID, &m.SceneID, &m.Type, &m.Status, &m.URL,
+		&m.ID, &novelID, &sceneID, &m.Type, &m.Status, &m.URL,
 		&m.Metadata.Width, &m.Metadata.Height, &m.Metadata.Duration,
 		&m.Metadata.Format, &m.Metadata.FileSize,
 		&m.GenerationID, &m.ErrorMessage,
@@ -78,6 +80,12 @@ func (r *MediaRepository) FindByID(ctx context.Context, id media.MediaID) (*medi
 		return nil, fmt.Errorf("failed to find media: %w", err)
 	}
 
+	if novelID.Valid {
+		m.NovelID = novelID.String
+	}
+	if sceneID.Valid {
+		m.SceneID = sceneID.String
+	}
 	if completedAt.Valid {
 		m.CompletedAt = &completedAt.Time
 	}
@@ -87,7 +95,7 @@ func (r *MediaRepository) FindByID(ctx context.Context, id media.MediaID) (*medi
 
 func (r *MediaRepository) FindBySceneID(ctx context.Context, sceneID string) ([]*media.Media, error) {
 	query := `
-		SELECT id, scene_id, type, status, url, width, height, duration,
+		SELECT id, novel_id, scene_id, type, status, url, width, height, duration,
 			   format, file_size, generation_id, error_message, created_at, updated_at, completed_at
 		FROM media
 		WHERE scene_id = ?
@@ -104,9 +112,10 @@ func (r *MediaRepository) FindBySceneID(ctx context.Context, sceneID string) ([]
 	for rows.Next() {
 		var m media.Media
 		var completedAt sql.NullTime
+		var novelID, scID sql.NullString
 
 		err := rows.Scan(
-			&m.ID, &m.SceneID, &m.Type, &m.Status, &m.URL,
+			&m.ID, &novelID, &scID, &m.Type, &m.Status, &m.URL,
 			&m.Metadata.Width, &m.Metadata.Height, &m.Metadata.Duration,
 			&m.Metadata.Format, &m.Metadata.FileSize,
 			&m.GenerationID, &m.ErrorMessage,
@@ -116,6 +125,60 @@ func (r *MediaRepository) FindBySceneID(ctx context.Context, sceneID string) ([]
 			return nil, fmt.Errorf("failed to scan media: %w", err)
 		}
 
+		if novelID.Valid {
+			m.NovelID = novelID.String
+		}
+		if scID.Valid {
+			m.SceneID = scID.String
+		}
+		if completedAt.Valid {
+			m.CompletedAt = &completedAt.Time
+		}
+
+		mediaList = append(mediaList, &m)
+	}
+
+	return mediaList, nil
+}
+
+func (r *MediaRepository) FindByNovelID(ctx context.Context, novelID string) ([]*media.Media, error) {
+	query := `
+		SELECT id, novel_id, scene_id, type, status, url, width, height, duration,
+			   format, file_size, generation_id, error_message, created_at, updated_at, completed_at
+		FROM media
+		WHERE novel_id = ?
+		ORDER BY created_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, novelID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query media: %w", err)
+	}
+	defer rows.Close()
+
+	var mediaList []*media.Media
+	for rows.Next() {
+		var m media.Media
+		var completedAt sql.NullTime
+		var nID, sceneID sql.NullString
+
+		err := rows.Scan(
+			&m.ID, &nID, &sceneID, &m.Type, &m.Status, &m.URL,
+			&m.Metadata.Width, &m.Metadata.Height, &m.Metadata.Duration,
+			&m.Metadata.Format, &m.Metadata.FileSize,
+			&m.GenerationID, &m.ErrorMessage,
+			&m.CreatedAt, &m.UpdatedAt, &completedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan media: %w", err)
+		}
+
+		if nID.Valid {
+			m.NovelID = nID.String
+		}
+		if sceneID.Valid {
+			m.SceneID = sceneID.String
+		}
 		if completedAt.Valid {
 			m.CompletedAt = &completedAt.Time
 		}
@@ -172,7 +235,7 @@ func (r *MediaRepository) Delete(ctx context.Context, id media.MediaID) error {
 
 func (r *MediaRepository) FindPendingMedia(ctx context.Context, limit int) ([]*media.Media, error) {
 	query := `
-		SELECT id, scene_id, type, status, url, width, height, duration,
+		SELECT id, novel_id, scene_id, type, status, url, width, height, duration,
 			   format, file_size, generation_id, error_message, created_at, updated_at, completed_at
 		FROM media
 		WHERE status = ?
@@ -190,9 +253,10 @@ func (r *MediaRepository) FindPendingMedia(ctx context.Context, limit int) ([]*m
 	for rows.Next() {
 		var m media.Media
 		var completedAt sql.NullTime
+		var novelID, sceneID sql.NullString
 
 		err := rows.Scan(
-			&m.ID, &m.SceneID, &m.Type, &m.Status, &m.URL,
+			&m.ID, &novelID, &sceneID, &m.Type, &m.Status, &m.URL,
 			&m.Metadata.Width, &m.Metadata.Height, &m.Metadata.Duration,
 			&m.Metadata.Format, &m.Metadata.FileSize,
 			&m.GenerationID, &m.ErrorMessage,
@@ -202,6 +266,12 @@ func (r *MediaRepository) FindPendingMedia(ctx context.Context, limit int) ([]*m
 			return nil, fmt.Errorf("failed to scan media: %w", err)
 		}
 
+		if novelID.Valid {
+			m.NovelID = novelID.String
+		}
+		if sceneID.Valid {
+			m.SceneID = sceneID.String
+		}
 		if completedAt.Valid {
 			m.CompletedAt = &completedAt.Time
 		}

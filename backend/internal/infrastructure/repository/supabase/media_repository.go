@@ -20,6 +20,7 @@ func NewMediaRepository(client *postgrest.Client) media.MediaRepository {
 func (r *MediaRepository) Save(ctx context.Context, m *media.Media) error {
 	data := map[string]interface{}{
 		"id":             string(m.ID),
+		"novel_id":       m.NovelID,
 		"scene_id":       m.SceneID,
 		"type":           string(m.Type),
 		"status":         string(m.Status),
@@ -74,6 +75,31 @@ func (r *MediaRepository) FindBySceneID(ctx context.Context, sceneID string) ([]
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to find media by scene ID: %w", err)
+	}
+
+	var mediaList []*media.Media
+	for _, result := range results {
+		m, err := r.mapToMedia(result)
+		if err != nil {
+			return nil, err
+		}
+		mediaList = append(mediaList, m)
+	}
+
+	return mediaList, nil
+}
+
+func (r *MediaRepository) FindByNovelID(ctx context.Context, novelID string) ([]*media.Media, error) {
+	var results []map[string]interface{}
+
+	_, err := r.client.From("aimotion_media").
+		Select("*", "", false).
+		Eq("novel_id", novelID).
+		Order("created_at", &postgrest.OrderOpts{Ascending: true}).
+		ExecuteTo(&results)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to find media by novel ID: %w", err)
 	}
 
 	var mediaList []*media.Media
@@ -152,6 +178,9 @@ func (r *MediaRepository) mapToMedia(data map[string]interface{}) (*media.Media,
 
 	if id, ok := data["id"].(string); ok {
 		m.ID = media.MediaID(id)
+	}
+	if novelID, ok := data["novel_id"].(string); ok {
+		m.NovelID = novelID
 	}
 	if sceneID, ok := data["scene_id"].(string); ok {
 		m.SceneID = sceneID

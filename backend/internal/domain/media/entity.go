@@ -29,7 +29,8 @@ var (
 
 type Media struct {
 	ID           MediaID
-	SceneID      string
+	NovelID      string // 关联的小说ID
+	SceneID      string // 关联的场景ID（可选，用于场景生成模式）
 	Type         MediaType
 	Status       MediaStatus
 	URL          string
@@ -45,6 +46,19 @@ func NewMedia(sceneID string, mediaType MediaType) *Media {
 	return &Media{
 		ID:        MediaID(generateID()),
 		SceneID:   sceneID,
+		Type:      mediaType,
+		Status:    MediaStatusPending,
+		Metadata:  MediaMetadata{},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+}
+
+// NewMediaForNovel 创建与小说关联的媒体实体（用于漫画生成等场景）
+func NewMediaForNovel(novelID string, mediaType MediaType) *Media {
+	return &Media{
+		ID:        MediaID(generateID()),
+		NovelID:   novelID,
 		Type:      mediaType,
 		Status:    MediaStatusPending,
 		Metadata:  MediaMetadata{},
@@ -82,8 +96,9 @@ func (m *Media) Validate() error {
 	if m.Type != MediaTypeImage && m.Type != MediaTypeVideo {
 		return ErrInvalidMediaType
 	}
-	if m.SceneID == "" {
-		return errors.New("scene_id is required")
+	// Either NovelID or SceneID must be provided
+	if m.NovelID == "" && m.SceneID == "" {
+		return errors.New("either novel_id or scene_id is required")
 	}
 	return nil
 }
