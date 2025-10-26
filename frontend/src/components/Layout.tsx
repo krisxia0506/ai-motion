@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { MdMenu, MdClose, MdHome, MdLibraryBooks, MdPerson, MdMovie, MdFileDownload } from 'react-icons/md';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { MdMenu, MdClose, MdHome, MdLibraryBooks, MdPerson, MdMovie, MdFileDownload, MdLogout, MdAccountCircle } from 'react-icons/md';
 import { FloatingAvatar } from './common/FloatingAvatar';
+import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
 
 export const Layout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   const navItems = [
     { path: '/', label: '首页', icon: <MdHome size={20} /> },
@@ -45,6 +49,38 @@ export const Layout: React.FC = () => {
                 </Link>
               ))}
             </nav>
+
+            <div className="header-user">
+              {user ? (
+                <div className="user-menu-container">
+                  <button
+                    className="user-menu-button"
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                  >
+                    <MdAccountCircle size={24} />
+                    <span className="user-email">{user.email}</span>
+                  </button>
+                  {showUserMenu && (
+                    <div className="user-menu-dropdown">
+                      <button
+                        className="user-menu-item"
+                        onClick={async () => {
+                          await signOut();
+                          navigate('/login');
+                        }}
+                      >
+                        <MdLogout size={20} />
+                        <span>退出登录</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link to="/login" className="login-button">
+                  登录
+                </Link>
+              )}
+            </div>
 
             <button
               className="mobile-menu-button"
