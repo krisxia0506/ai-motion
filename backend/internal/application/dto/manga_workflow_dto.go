@@ -2,12 +2,7 @@ package dto
 
 import "time"
 
-// GenerateMangaRequest 创建漫画生成任务请求
-type GenerateMangaRequest struct {
-	Title   string `json:"title" binding:"required,min=1,max=200"`
-	Author  string `json:"author"`
-	Content string `json:"content" binding:"required,min=100,max=5000"`
-}
+// Note: GenerateMangaRequest is defined in novel_dto.go
 
 // TaskStatusResponse 任务状态响应
 type TaskStatusResponse struct {
@@ -41,23 +36,23 @@ type TaskProgressDetailsResponse struct {
 
 // TaskResultResponse 任务结果响应
 type TaskResultResponse struct {
-	NovelID        string              `json:"novel_id"`
-	Title          string              `json:"title"`
-	CharacterCount int                 `json:"character_count"`
-	SceneCount     int                 `json:"scene_count"`
-	Characters     []CharacterResponse `json:"characters"`
-	Scenes         []SceneResponse     `json:"scenes"`
+	NovelID        string                       `json:"novel_id"`
+	Title          string                       `json:"title"`
+	CharacterCount int                          `json:"character_count"`
+	SceneCount     int                          `json:"scene_count"`
+	Characters     []TaskCharacterResponse      `json:"characters"`
+	Scenes         []TaskSceneResponse          `json:"scenes"`
 }
 
-// CharacterResponse 角色信息
-type CharacterResponse struct {
+// TaskCharacterResponse 任务中的角色信息（简化版）
+type TaskCharacterResponse struct {
 	ID                string `json:"id"`
 	Name              string `json:"name"`
 	ReferenceImageURL string `json:"reference_image_url"`
 }
 
-// SceneResponse 场景信息
-type SceneResponse struct {
+// TaskSceneResponse 任务中的场景信息（简化版）
+type TaskSceneResponse struct {
 	ID          string `json:"id"`
 	SequenceNum int    `json:"sequence_num"`
 	Description string `json:"description"`

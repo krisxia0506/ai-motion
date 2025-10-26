@@ -300,7 +300,7 @@ func (s *MangaWorkflowService) stepGenerateSceneImages(ctx context.Context, t *t
 
 		// 生成场景图片
 		if err := s.generateSceneImage(ctx, scn, characters); err != nil {
-			return fmt.Errorf("failed to generate image for scene %d: %w", scn.SequenceNum, err)
+			return fmt.Errorf("failed to generate image for scene %d: %w", scn.SceneNumber, err)
 		}
 	}
 
@@ -541,9 +541,9 @@ func (s *MangaWorkflowService) buildTaskResult(ctx context.Context, t *task.Task
 	}
 
 	// 构建角色列表
-	characterResponses := make([]dto.CharacterResponse, 0, len(characters))
+	characterResponses := make([]dto.TaskCharacterResponse, 0, len(characters))
 	for _, char := range characters {
-		characterResponses = append(characterResponses, dto.CharacterResponse{
+		characterResponses = append(characterResponses, dto.TaskCharacterResponse{
 			ID:                string(char.ID),
 			Name:              char.Name,
 			ReferenceImageURL: char.ReferenceImageURL,
@@ -551,11 +551,11 @@ func (s *MangaWorkflowService) buildTaskResult(ctx context.Context, t *task.Task
 	}
 
 	// 构建场景列表
-	sceneResponses := make([]dto.SceneResponse, 0, len(scenes))
+	sceneResponses := make([]dto.TaskSceneResponse, 0, len(scenes))
 	for _, sc := range scenes {
-		sceneResponses = append(sceneResponses, dto.SceneResponse{
+		sceneResponses = append(sceneResponses, dto.TaskSceneResponse{
 			ID:          string(sc.ID),
-			SequenceNum: sc.SequenceNum,
+			SequenceNum: sc.SceneNumber,
 			Description: sc.Description.FullText,
 			ImageURL:    "", // TODO: 从 Media 中获取图片URL
 		})

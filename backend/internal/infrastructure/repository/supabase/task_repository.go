@@ -164,7 +164,7 @@ func (r *TaskRepository) FindByUserID(ctx context.Context, userID string, page, 
 		tasks = append(tasks, t)
 	}
 
-	return tasks, count, nil
+	return tasks, int(count), nil
 }
 
 // Delete 删除任务
