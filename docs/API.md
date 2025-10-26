@@ -11,31 +11,49 @@ AI-Motion 提供 RESTful API 接口,用于小说解析、角色管理、场景�
 
 ## 认证
 
-API 使用 **JWT (JSON Web Token)** 进行认证。
+API 使用 **Supabase Auth** 进行认证和用户管理。前端通过 Supabase 客户端处理用户注册、登录和会话管理，后端 API 验证 Supabase 生成的访问令牌。
 
 ### 认证流程
 
-1. 用户通过 `/api/v1/auth/register` 注册账号
-2. 用户通过 `/api/v1/auth/login` 登录,获取 JWT token
-3. 在后续请求的 HTTP Header 中携带 token: `Authorization: Bearer <token>`
-4. Token 过期时间默认为 7 天,可通过 `/api/v1/auth/refresh` 刷新
+1. **前端认证**:
+   - 用户在前端使用邮箱和密码进行注册 (Supabase Auth)
+   - 用户登录后，Supabase 返回访问令牌 (Access Token)
+   - 前端自动在所有 API 请求中携带访问令牌
+
+2. **后端验证**:
+   - 后端验证 Supabase 访问令牌的有效性
+   - 从令牌中提取用户信息 (userId, email)
+   - 授权用户访问资源
+
+### Supabase 配置
+
+前端环境变量配置:
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+后端需要配置相同的 Supabase 项目凭证以验证令牌:
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
 
 ### Header 格式
 
 ```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Authorization: Bearer <supabase-access-token>
 ```
 
 ### 公开接口 (无需认证)
 
 - `GET /health`
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/refresh`
 
-### 认证接口 (需要 JWT)
+**注意**: 用户注册、登录、登出等认证操作由前端直接通过 Supabase 客户端完成，不经过后端 API。
 
-所有其他接口均需要在 Header 中携带有效的 JWT token。
+### 认证接口 (需要 Supabase Token)
+
+所有业务 API 接口均需要在 Header 中携带有效的 Supabase 访问令牌。
 
 ---
 
@@ -88,7 +106,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ## 接口分类
 
 1. [系统健康检查](#1-系统健康检查)
-2. [认证管理](#2-认证管理)
+2. [认证管理](#2-认证管理) (前端通过 Supabase，后端仅验证令牌)
 3. [小说管理](#3-小说管理)
 4. [角色管理](#4-角色管理)
 5. [场景管理](#5-场景管理)
@@ -135,230 +153,71 @@ curl http://localhost:8080/health
 
 ## 2. 认证管理
 
-### 2.1 POST /api/v1/auth/register
+### 认证说明
 
-用户注册
+用户认证由前端直接通过 **Supabase Auth** 处理，包括：
+- 用户注册 (邮箱 + 密码)
+- 用户登录 (邮箱 + 密码)
+- 会话管理 (自动刷新令牌)
+- 用户登出
 
-**请求参数**
-```json
-{
-  "username": "user123",
-  "email": "user@example.com",
-  "password": "securePassword123"
-}
+### 前端认证实现
+
+前端使用 `@supabase/supabase-js` 客户端库处理所有认证操作:
+
+**注册示例**
+```typescript
+const { error } = await supabase.auth.signUp({
+  email: 'user@example.com',
+  password: 'password123'
+});
 ```
 
-**参数说明**
-- `username` (required) - 用户名,3-20个字符,仅支持字母、数字、下划线
-- `email` (required) - 邮箱地址
-- `password` (required) - 密码,至少8个字符,需包含大小写字母和数字
-
-**请求示例**
-```bash
-curl -X POST \
-  http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "user123",
-    "email": "user@example.com",
-    "password": "securePassword123"
-  }'
+**登录示例**
+```typescript
+const { error } = await supabase.auth.signInWithPassword({
+  email: 'user@example.com',
+  password: 'password123'
+});
 ```
 
-**响应示例**
-```json
-{
-  "code": 0,
-  "message": "注册成功",
-  "data": {
-    "userId": "user_abc123",
-    "username": "user123",
-    "email": "user@example.com",
-    "createdAt": "2024-01-01T12:00:00Z"
-  }
-}
+**登出示例**
+```typescript
+const { error } = await supabase.auth.signOut();
 ```
 
-**业务逻辑**
-1. 验证用户名、邮箱、密码格式
-2. 检查用户名和邮箱是否已存在
-3. 使用 bcrypt 加密密码(cost=10)
-4. 创建 User 实体
-5. 保存到数据库
-6. 返回用户基本信息
-
-**错误示例**
-```json
-{
-  "code": 10003,
-  "message": "用户名已存在",
-  "data": null
-}
+**获取当前用户**
+```typescript
+const { data: { user } } = await supabase.auth.getUser();
 ```
 
----
+### 后端令牌验证
 
-### 2.2 POST /api/v1/auth/login
+后端需要验证 Supabase 访问令牌:
 
-用户登录
+**验证流程**
+1. 从请求 Header 中提取 `Authorization: Bearer <token>`
+2. 使用 Supabase Admin SDK 验证令牌
+3. 从令牌中提取用户信息 (userId, email)
+4. 授权用户访问资源
 
-**请求参数**
-```json
-{
-  "username": "user123",
-  "password": "securePassword123"
-}
-```
+**Go 后端验证示例**
+```go
+import "github.com/supabase-community/supabase-go"
 
-**参数说明**
-- `username` (required) - 用户名或邮箱
-- `password` (required) - 密码
-
-**请求示例**
-```bash
-curl -X POST \
-  http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "user123",
-    "password": "securePassword123"
-  }'
-```
-
-**响应示例**
-```json
-{
-  "code": 0,
-  "message": "登录成功",
-  "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyX2FiYzEyMyIsInVzZXJuYW1lIjoidXNlcjEyMyIsImV4cCI6MTcwNDE5NjgwMH0.xxx",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyX2FiYzEyMyIsInR5cGUiOiJyZWZyZXNoIiwiZXhwIjoxNzA2Nzg4ODAwfQ.yyy",
-    "tokenType": "Bearer",
-    "expiresIn": 604800,
-    "user": {
-      "userId": "user_abc123",
-      "username": "user123",
-      "email": "user@example.com"
+func verifyToken(token string) (*User, error) {
+    client := supabase.CreateClient(supabaseURL, supabaseServiceKey)
+    user, err := client.Auth.GetUser(token)
+    if err != nil {
+        return nil, err
     }
-  }
+    return user, nil
 }
 ```
 
-**响应字段说明**
-- `accessToken` - 访问令牌,用于 API 请求
-- `refreshToken` - 刷新令牌,用于获取新的访问令牌
-- `tokenType` - 令牌类型,固定为 "Bearer"
-- `expiresIn` - 访问令牌过期时间(秒),默认 7 天
+### 2.1 GET /api/v1/auth/me
 
-**业务逻辑**
-1. 查找用户(支持用户名或邮箱登录)
-2. 验证密码(使用 bcrypt.CompareHashAndPassword)
-3. 生成 JWT accessToken:
-   - Payload: `userId`, `username`, `exp`(过期时间)
-   - 签名算法: HS256
-   - 过期时间: 7天
-4. 生成 JWT refreshToken:
-   - Payload: `userId`, `type: "refresh"`, `exp`(过期时间)
-   - 过期时间: 30天
-5. 返回 token 和用户信息
-
-**错误示例**
-```json
-{
-  "code": 20003,
-  "message": "用户名或密码错误",
-  "data": null
-}
-```
-
----
-
-### 2.3 POST /api/v1/auth/refresh
-
-刷新访问令牌
-
-**请求参数**
-```json
-{
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**请求示例**
-```bash
-curl -X POST \
-  http://localhost:8080/api/v1/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }'
-```
-
-**响应示例**
-```json
-{
-  "code": 0,
-  "message": "Token 刷新成功",
-  "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new_token",
-    "tokenType": "Bearer",
-    "expiresIn": 604800
-  }
-}
-```
-
-**业务逻辑**
-1. 验证 refreshToken 是否有效
-2. 解析 token 获取 userId
-3. 检查用户是否存在
-4. 生成新的 accessToken
-5. 返回新 token
-
-**错误示例**
-```json
-{
-  "code": 20001,
-  "message": "Token 无效或已过期",
-  "data": null
-}
-```
-
----
-
-### 2.4 POST /api/v1/auth/logout
-
-**认证**: 需要 JWT
-
-用户登出
-
-**请求示例**
-```bash
-curl -X POST \
-  http://localhost:8080/api/v1/auth/logout \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-```
-
-**响应示例**
-```json
-{
-  "code": 0,
-  "message": "登出成功",
-  "data": null
-}
-```
-
-**业务逻辑**
-1. 解析 JWT token 获取 userId
-2. (可选)将 token 加入黑名单(需要 Redis)
-3. 返回成功消息
-
-**注意**: 由于 JWT 是无状态的,客户端需要删除本地存储的 token
-
----
-
-### 2.5 GET /api/v1/auth/me
-
-**认证**: 需要 JWT
+**认证**: 需要 Supabase Token
 
 获取当前用户信息
 
@@ -366,7 +225,7 @@ curl -X POST \
 ```bash
 curl -X GET \
   http://localhost:8080/api/v1/auth/me \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  -H "Authorization: Bearer <supabase-access-token>"
 ```
 
 **响应示例**
@@ -375,8 +234,7 @@ curl -X GET \
   "code": 0,
   "message": "success",
   "data": {
-    "userId": "user_abc123",
-    "username": "user123",
+    "userId": "uuid-from-supabase",
     "email": "user@example.com",
     "createdAt": "2024-01-01T12:00:00Z",
     "usageStats": {
@@ -389,90 +247,30 @@ curl -X GET \
 ```
 
 **业务逻辑**
-1. 从 JWT token 中解析 userId
+1. 从 Supabase token 中验证并提取 userId
 2. 查询用户信息
 3. 统计用户使用情况
 4. 返回完整用户信息
 
----
+### Supabase Token 结构
 
-### 2.6 PUT /api/v1/auth/password
-
-**认证**: 需要 JWT
-
-修改密码
-
-**请求参数**
-```json
-{
-  "oldPassword": "oldPassword123",
-  "newPassword": "newPassword456"
-}
-```
-
-**请求示例**
-```bash
-curl -X PUT \
-  http://localhost:8080/api/v1/auth/password \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "oldPassword": "oldPassword123",
-    "newPassword": "newPassword456"
-  }'
-```
-
-**响应示例**
-```json
-{
-  "code": 0,
-  "message": "密码修改成功",
-  "data": null
-}
-```
-
-**业务逻辑**
-1. 从 JWT 获取 userId
-2. 验证旧密码是否正确
-3. 验证新密码强度
-4. 使用 bcrypt 加密新密码
-5. 更新数据库
-6. (可选)使所有旧 token 失效
-
-**错误示例**
-```json
-{
-  "code": 10001,
-  "message": "旧密码错误",
-  "data": null
-}
-```
-
----
-
-### JWT Token 结构
+Supabase 使用 JWT 格式的访问令牌，包含以下信息：
 
 **Access Token Payload**
 ```json
 {
-  "userId": "user_abc123",
-  "username": "user123",
-  "iat": 1704110400,
-  "exp": 1704715200
+  "aud": "authenticated",
+  "exp": 1704715200,
+  "sub": "uuid-user-id",
+  "email": "user@example.com",
+  "role": "authenticated"
 }
 ```
 
-**Refresh Token Payload**
-```json
-{
-  "userId": "user_abc123",
-  "type": "refresh",
-  "iat": 1704110400,
-  "exp": 1706788800
-}
-```
-
-**签名密钥**: 使用环境变量 `JWT_SECRET_KEY`,至少 32 字符
+**令牌特性**
+- 访问令牌默认有效期: 1 小时
+- Supabase 自动处理令牌刷新
+- 使用 Supabase 项目的 JWT Secret 签名
 
 ---
 
@@ -1824,10 +1622,12 @@ Headers:
 
 ## 接口开发优先级
 
+**注意**: 使用 Supabase Auth 后，用户注册、登录、登出等认证接口已由前端直接调用 Supabase，无需后端实现。后端仅需实现令牌验证中间件。
+
 ### P0 (核心功能,MVP 必需)
 1. ✅ GET /health
-2. POST /api/v1/auth/register
-3. POST /api/v1/auth/login
+2. ✅ 前端认证 (Supabase Auth - 已实现)
+3. POST /api/v1/auth/me (令牌验证 + 用户信息)
 4. POST /api/v1/novels/upload
 5. POST /api/v1/novels/:novelId/parse
 6. GET /api/v1/novels/:novelId/characters
@@ -1841,22 +1641,18 @@ Headers:
 12. POST /api/v1/generation/batch-scenes
 13. GET /api/v1/novels/:novelId
 14. GET /api/v1/scenes/:sceneId
-15. GET /api/v1/auth/me
-16. POST /api/v1/auth/refresh
 
 ### P2 (增强功能)
-17. POST /api/v1/projects
-18. POST /api/v1/export/video
-19. POST /api/v1/generation/voice
-20. PUT /api/v1/characters/:characterId
-21. PUT /api/v1/scenes/:sceneId
-22. POST /api/v1/auth/logout
-23. PUT /api/v1/auth/password
+15. POST /api/v1/projects
+16. POST /api/v1/export/video
+17. POST /api/v1/generation/voice
+18. PUT /api/v1/characters/:characterId
+19. PUT /api/v1/scenes/:sceneId
 
 ### P3 (优化功能)
-24. GET /api/v1/novels (列表)
-25. DELETE /api/v1/novels/:novelId
-26. POST /api/v1/export/scenes
+20. GET /api/v1/novels (列表)
+21. DELETE /api/v1/novels/:novelId
+22. POST /api/v1/export/scenes
 
 ---
 
