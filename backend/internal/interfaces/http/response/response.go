@@ -31,6 +31,7 @@ const (
 
 	CodeInvalidParams     = 10001
 	CodeResourceNotFound  = 10002
+	CodeUnauthorized      = 20001
 	CodeFileParseError    = 30002
 	CodeAIServiceError    = 40001
 	CodeGenerationError   = 40003
@@ -99,6 +100,10 @@ func InvalidParams(c *gin.Context, message string) {
 
 func ResourceNotFound(c *gin.Context, message string) {
 	Error(c, CodeResourceNotFound, message)
+}
+
+func Unauthorized(c *gin.Context, message string) {
+	Error(c, CodeUnauthorized, message)
 }
 
 func FileParseError(c *gin.Context, message string) {
