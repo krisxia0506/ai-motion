@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { MdMenu, MdClose, MdHome, MdLibraryBooks, MdPerson, MdMovie, MdFileDownload } from 'react-icons/md';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { MdMenu, MdClose, MdHome, MdLibraryBooks, MdPerson, MdMovie, MdFileDownload, MdLogin, MdLogout } from 'react-icons/md';
 import { FloatingAvatar } from './common/FloatingAvatar';
+import { useAuthStore } from '../store/authStore';
 import './Layout.css';
 
 export const Layout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuthStore();
 
   const navItems = [
     { path: '/', label: '首页', icon: <MdHome size={20} /> },
@@ -45,6 +48,30 @@ export const Layout: React.FC = () => {
                 </Link>
               ))}
             </nav>
+
+            <div className="header-auth">
+              {isAuthenticated ? (
+                <div className="auth-user">
+                  <span className="user-name">{user?.username}</span>
+                  <button
+                    onClick={() => {
+                      logout();
+                      navigate('/login');
+                    }}
+                    className="auth-button"
+                    title="Logout"
+                  >
+                    <MdLogout size={20} />
+                    <span>退出</span>
+                  </button>
+                </div>
+              ) : (
+                <Link to="/login" className="auth-button">
+                  <MdLogin size={20} />
+                  <span>登录</span>
+                </Link>
+              )}
+            </div>
 
             <button
               className="mobile-menu-button"

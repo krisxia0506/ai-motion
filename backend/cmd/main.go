@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiajiayi/ai-motion/internal/application/service"
@@ -12,6 +13,7 @@ import (
 	"github.com/xiajiayi/ai-motion/internal/domain/scene"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/ai/gemini"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/ai/sora"
+	"github.com/xiajiayi/ai-motion/internal/infrastructure/auth"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/config"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/database"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/repository/mysql"
@@ -30,6 +32,8 @@ func main() {
 	var characterHandler *handler.CharacterHandler
 	var sceneHandler *handler.SceneHandler
 	var generationHandler *handler.GenerationHandler
+	var authHandler *handler.AuthHandler
+	var authMiddleware *middleware.AuthMiddleware
 
 	geminiBaseURL := os.Getenv("GEMINI_BASE_URL")
 	geminiAPIKey := os.Getenv("GEMINI_API_KEY")
@@ -108,6 +112,18 @@ func main() {
 			characterRepo := mysql.NewMySQLCharacterRepository(dbConn)
 			sceneRepo := mysql.NewMySQLSceneRepository(dbConn)
 			mediaRepo := mysql.NewMediaRepository(dbConn)
+			userRepo := mysql.NewUserRepository(dbConn)
+
+			jwtSecret := os.Getenv("JWT_SECRET")
+			if jwtSecret == "" {
+				jwtSecret = "your-secret-key-change-in-production"
+				log.Println("Warning: Using default JWT secret, please set JWT_SECRET in production")
+			}
+			jwtService := auth.NewJWTService(jwtSecret, 24*time.Hour)
+
+			authService := service.NewAuthService(userRepo, jwtService)
+			authHandler = handler.NewAuthHandler(authService)
+			authMiddleware = middleware.NewAuthMiddleware(jwtService)
 
 			parserService := novel.NewParserService()
 			novelService := service.NewNovelService(novelRepo, chapterRepo, parserService)
@@ -152,6 +168,17 @@ func main() {
 
 	v1 := r.Group("/api/v1")
 	{
+		if authHandler != nil {
+			authGroup := v1.Group("/auth")
+			{
+				authGroup.POST("/register", authHandler.Register)
+				authGroup.POST("/login", authHandler.Login)
+				if authMiddleware != nil {
+					authGroup.GET("/me", authMiddleware.RequireAuth(), authHandler.GetCurrentUser)
+				}
+			}
+		}
+
 		if novelHandler != nil {
 			novelGroup := v1.Group("/novel")
 			{
