@@ -11,7 +11,8 @@ RUN npm install
 # 复制源码
 COPY frontend/ .
 
-# 构建
+# 构建 (使用根路径,不添加 /ai-motion 前缀)
+ENV VITE_BASE_PATH=/
 RUN npm run build
 
 # 运行阶段
