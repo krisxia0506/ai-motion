@@ -71,7 +71,7 @@ const LoginPage: React.FC = () => {
           )}
 
           <div className="space-y-4">
-            <div>
+            <div className="px-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
                 邮箱地址
               </label>
@@ -92,7 +92,7 @@ const LoginPage: React.FC = () => {
               )}
             </div>
 
-            <div>
+            <div className="px-2">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
                 密码
               </label>

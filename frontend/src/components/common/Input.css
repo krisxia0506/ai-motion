@@ -20,6 +20,7 @@
 
 .input {
   width: 100%;
+  max-width: 100%;
   padding: 0.625rem 0.875rem;
   border: 1.5px solid #e5e7eb;
   border-radius: 0.5rem;
@@ -27,6 +28,7 @@
   color: var(--color-text-primary);
   background-color: #ffffff;
   transition: all 0.15s ease;
+  box-sizing: border-box;
 }
 
 .input:hover:not(:disabled) {
