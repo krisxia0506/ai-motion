@@ -21,11 +21,17 @@ const (
 	NovelStatusFailed     NovelStatus = "failed"
 )
 
+const (
+	MinWordCount = 100
+	MaxWordCount = 5000
+)
+
 var (
 	ErrNovelNotFound   = errors.New("novel not found")
 	ErrInvalidContent  = errors.New("invalid novel content")
 	ErrEmptyTitle      = errors.New("novel title cannot be empty")
 	ErrContentTooShort = errors.New("novel content is too short")
+	ErrContentTooLong  = errors.New("novel content exceeds maximum word limit of 5000 words")
 	ErrInvalidStatus   = errors.New("invalid novel status")
 )
 
@@ -113,6 +119,15 @@ func validateNovelInput(title, author, content string) error {
 	if len(content) < 100 {
 		return ErrContentTooShort
 	}
+	
+	wordCount := countWords(content)
+	if wordCount < MinWordCount {
+		return ErrContentTooShort
+	}
+	if wordCount > MaxWordCount {
+		return ErrContentTooLong
+	}
+	
 	return nil
 }
 

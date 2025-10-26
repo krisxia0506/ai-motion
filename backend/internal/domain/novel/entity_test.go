@@ -19,7 +19,7 @@ func TestNewNovel(t *testing.T) {
 			name:    "valid novel",
 			title:   "Test Novel",
 			author:  "Test Author",
-			content: strings.Repeat("This is a test content. ", 10),
+			content: strings.Repeat("This is a test content. ", 50),
 			wantErr: false,
 		},
 		{
@@ -50,7 +50,7 @@ func TestNewNovel(t *testing.T) {
 			name:    "valid novel with trimmed whitespace",
 			title:   "  Test Novel  ",
 			author:  "  Test Author  ",
-			content: strings.Repeat("content ", 20),
+			content: strings.Repeat("This is a test content with more words. ", 20),
 			wantErr: false,
 		},
 	}
