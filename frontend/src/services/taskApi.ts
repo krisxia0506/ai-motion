@@ -2,7 +2,7 @@ import { apiClient } from './api';
 
 export interface CreateTaskRequest {
   title: string;
-  author?: string;
+  author: string;
   content: string;
 }
 

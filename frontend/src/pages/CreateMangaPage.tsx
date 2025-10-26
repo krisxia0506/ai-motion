@@ -44,7 +44,7 @@ const CreateMangaPage: React.FC = () => {
 
       const response = await taskApi.createTask({
         title,
-        author: author || undefined,
+        author: author || '匿名作者',
         content,
       });
 
@@ -96,7 +96,7 @@ const CreateMangaPage: React.FC = () => {
         {/* Header */}
         <div className="mb-8 animate-slide-down">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">创建漫画生成任务</h1>
-          <p className="text-gray-600">输入小说内容，AI 将自动提取角色、划分场景并生成精美漫画</p>
+          <p className="text-gray-600">输入小说内容，AI 将自动为您生成 10 张精美漫画图片</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -282,15 +282,15 @@ const CreateMangaPage: React.FC = () => {
               <ul className="space-y-3 text-sm text-primary-800">
                 <li className="flex items-start gap-2">
                   <span className="text-primary-600 font-bold mt-0.5">•</span>
-                  <span>内容应包含<strong>完整的故事情节</strong>和<strong>清晰的角色描述</strong></span>
+                  <span>内容应包含<strong>完整的故事情节</strong>和<strong>生动的场景描述</strong></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary-600 font-bold mt-0.5">•</span>
-                  <span>描述角色的<strong>外貌特征</strong>有助于生成更准确的形象</span>
+                  <span>AI 将根据故事内容<strong>自动生成 10 张连贯的漫画图片</strong></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary-600 font-bold mt-0.5">•</span>
-                  <span>包含<strong>对话和场景描写</strong>可以生成更丰富的漫画内容</span>
+                  <span>包含<strong>丰富的情节和细节</strong>可以生成更精美的漫画</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary-600 font-bold mt-0.5">•</span>
@@ -308,8 +308,8 @@ const CreateMangaPage: React.FC = () => {
                     1
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">角色提取</p>
-                    <p className="text-sm text-gray-600 mt-1">AI 自动识别和提取故事中的角色</p>
+                    <p className="font-medium text-gray-900">分析小说内容</p>
+                    <p className="text-sm text-gray-600 mt-1">AI 理解故事情节和关键场景</p>
                   </div>
                 </li>
                 <li className="flex gap-3">
@@ -317,26 +317,8 @@ const CreateMangaPage: React.FC = () => {
                     2
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">生成参考图</p>
-                    <p className="text-sm text-gray-600 mt-1">为每个角色生成一致的参考形象</p>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-warning-100 text-warning-700 rounded-full flex items-center justify-center font-bold text-sm">
-                    3
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">场景划分</p>
-                    <p className="text-sm text-gray-600 mt-1">智能划分故事场景和对话</p>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center font-bold text-sm">
-                    4
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">生成漫画</p>
-                    <p className="text-sm text-gray-600 mt-1">为每个场景生成精美的漫画图片</p>
+                    <p className="font-medium text-gray-900">生成漫画图片</p>
+                    <p className="text-sm text-gray-600 mt-1">根据故事生成 10 张精美的漫画面板</p>
                   </div>
                 </li>
               </ol>
@@ -352,8 +334,8 @@ const CreateMangaPage: React.FC = () => {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">3-5 分钟</p>
-                  <p className="text-sm text-gray-600">根据内容长度而定</p>
+                  <p className="text-2xl font-bold text-gray-900">2-3 分钟</p>
+                  <p className="text-sm text-gray-600">生成 10 张漫画图片</p>
                 </div>
               </div>
             </div>

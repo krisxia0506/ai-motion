@@ -70,21 +70,14 @@ type OpenAIImageResponse struct {
 }
 
 func (c *Client) TextToImage(ctx context.Context, req TextToImageRequest) (string, error) {
+	// 使用固定尺寸 1344x768
+	size := "1344x768"
+
 	payload := map[string]interface{}{
+		"model":  "gemini-2.5-flash-image",
 		"prompt": req.Prompt,
 		"n":      1,
-	}
-
-	if req.Width > 0 && req.Height > 0 {
-		payload["size"] = fmt.Sprintf("%dx%d", req.Width, req.Height)
-	}
-
-	if req.Quality != "" {
-		payload["quality"] = req.Quality
-	}
-
-	if req.Style != "" {
-		payload["style"] = req.Style
+		"size":   size,
 	}
 
 	result, err := c.makeRequest(ctx, "images/generations", payload)
@@ -96,14 +89,14 @@ func (c *Client) TextToImage(ctx context.Context, req TextToImageRequest) (strin
 }
 
 func (c *Client) ImageToImage(ctx context.Context, req ImageToImageRequest) (string, error) {
+	size := "1344x768"
+
 	payload := map[string]interface{}{
+		"model":  "gemini-2.5-flash-image",
 		"prompt": req.Prompt,
 		"image":  req.ReferenceImage,
 		"n":      1,
-	}
-
-	if req.Width > 0 && req.Height > 0 {
-		payload["size"] = fmt.Sprintf("%dx%d", req.Width, req.Height)
+		"size":   size,
 	}
 
 	if req.Strength > 0 {

@@ -99,217 +99,109 @@ func (s *MangaWorkflowService) ExecuteTask(ctx context.Context, taskID string) {
 		return
 	}
 
-	// 步骤1: 解析小说
-	if err := s.stepParseNovel(ctx, taskEntity, novelEntity); err != nil {
-		taskEntity.MarkFailed(50002, fmt.Sprintf("解析小说失败: %v", err))
+	// 步骤1: 生成漫画图片(直接调用 Gemini 生成10张)
+	if err := s.stepGenerateMangaImages(ctx, taskEntity, novelEntity); err != nil {
+		taskEntity.MarkFailed(40001, fmt.Sprintf("生成漫画失败: %v", err))
 		s.taskRepo.Save(ctx, taskEntity)
 		return
 	}
 
-	// 步骤2: 提取角色
-	characters, err := s.stepExtractCharacters(ctx, taskEntity, novelEntity)
-	if err != nil {
-		taskEntity.MarkFailed(50003, fmt.Sprintf("提取角色失败: %v", err))
-		s.taskRepo.Save(ctx, taskEntity)
-		return
-	}
-
-	// 步骤3: 生成角色参考图
-	if err := s.stepGenerateCharacterReferences(ctx, taskEntity, characters); err != nil {
-		taskEntity.MarkFailed(40001, fmt.Sprintf("生成角色参考图失败: %v", err))
-		s.taskRepo.Save(ctx, taskEntity)
-		return
-	}
-
-	// 步骤4: 划分场景
-	scenes, err := s.stepDivideScenes(ctx, taskEntity, novelEntity)
-	if err != nil {
-		taskEntity.MarkFailed(50004, fmt.Sprintf("划分场景失败: %v", err))
-		s.taskRepo.Save(ctx, taskEntity)
-		return
-	}
-
-	// 步骤5: 生成场景图片
-	if err := s.stepGenerateSceneImages(ctx, taskEntity, scenes, characters); err != nil {
-		taskEntity.MarkFailed(40001, fmt.Sprintf("生成场景图片失败: %v", err))
-		s.taskRepo.Save(ctx, taskEntity)
-		return
-	}
-
-	// 步骤6: 完成
+	// 步骤2: 完成
 	taskEntity.MarkCompleted()
 	s.taskRepo.Save(ctx, taskEntity)
 }
 
-// 步骤1: 解析小说
-func (s *MangaWorkflowService) stepParseNovel(ctx context.Context, t *task.Task, n *novel.Novel) error {
+// 步骤1: 生成漫画图片（直接调用 Gemini 生成10张漫画）
+func (s *MangaWorkflowService) stepGenerateMangaImages(ctx context.Context, t *task.Task, n *novel.Novel) error {
 	if t.IsCancelled() {
 		return fmt.Errorf("task cancelled")
 	}
 
-	t.UpdateProgress("解析小说", 1, 17, t.ProgressDetails)
-	s.taskRepo.Save(ctx, t)
-
-	// 使用 NovelParserService 解析小说
-	if err := s.parserService.Parse(n); err != nil {
-		return err
-	}
-
-	// 保存章节
-	if len(n.Chapters) > 0 {
-		if err := s.chapterRepo.SaveBatch(ctx, n.Chapters); err != nil {
-			return fmt.Errorf("failed to save chapters: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// 步骤2: 提取角色
-func (s *MangaWorkflowService) stepExtractCharacters(ctx context.Context, t *task.Task, n *novel.Novel) ([]*character.Character, error) {
-	if t.IsCancelled() {
-		return nil, fmt.Errorf("task cancelled")
-	}
-
-	t.UpdateProgress("提取角色", 2, 33, t.ProgressDetails)
-	s.taskRepo.Save(ctx, t)
-
-	// 使用 CharacterExtractorService 提取角色
-	characters, err := s.extractorService.ExtractFromNovel(ctx, string(n.ID), n.Content)
-	if err != nil {
-		return nil, err
-	}
-
-	// 更新进度详情
+	const totalImages = 10
 	details := t.ProgressDetails
-	details.CharactersExtracted = len(characters)
-	t.UpdateProgress("提取角色", 2, 33, details)
-	s.taskRepo.Save(ctx, t)
 
-	return characters, nil
-}
-
-// 步骤3: 生成角色参考图
-func (s *MangaWorkflowService) stepGenerateCharacterReferences(ctx context.Context, t *task.Task, characters []*character.Character) error {
-	if t.IsCancelled() {
-		return fmt.Errorf("task cancelled")
+	// 准备小说内容摘要（限制长度）
+	contentSummary := n.Content
+	if len(contentSummary) > 2000 {
+		contentSummary = contentSummary[:2000] + "..."
 	}
 
-	details := t.ProgressDetails
-	details.CharactersExtracted = len(characters)
-
-	for i, char := range characters {
+	for i := 0; i < totalImages; i++ {
 		if t.IsCancelled() {
 			return fmt.Errorf("task cancelled")
 		}
 
-		// 更新当前进度
-		details.CharactersGenerated = i
-		t.UpdateProgress("生成角色参考图", 3, 50, details)
-		s.taskRepo.Save(ctx, t)
-
-		// 生成参考图
-		if err := s.generateCharacterReferenceImage(ctx, char); err != nil {
-			return fmt.Errorf("failed to generate reference for character %s: %w", char.Name, err)
-		}
-	}
-
-	// 完成参考图生成
-	details.CharactersGenerated = len(characters)
-	t.UpdateProgress("生成角色参考图", 3, 50, details)
-	s.taskRepo.Save(ctx, t)
-
-	return nil
-}
-
-// 步骤4: 划分场景
-func (s *MangaWorkflowService) stepDivideScenes(ctx context.Context, t *task.Task, n *novel.Novel) ([]*scene.Scene, error) {
-	if t.IsCancelled() {
-		return nil, fmt.Errorf("task cancelled")
-	}
-
-	details := t.ProgressDetails
-	t.UpdateProgress("划分场景", 4, 67, details)
-	s.taskRepo.Save(ctx, t)
-
-	// 使用 SceneDividerService 划分场景
-	var allScenes []*scene.Scene
-	if len(n.Chapters) > 0 {
-		for _, chapter := range n.Chapters {
-			chapterData := scene.Chapter{
-				ID:      chapter.ID,
-				NovelID: string(n.ID),
-				Content: chapter.Content,
-			}
-
-			scenes, err := s.dividerService.DivideChapterIntoScenes(ctx, chapterData)
-			if err != nil {
-				return nil, fmt.Errorf("failed to divide chapter %s: %w", chapter.ID, err)
-			}
-
-			allScenes = append(allScenes, scenes...)
-		}
-	} else {
-		chapterData := scene.Chapter{
-			ID:      string(n.ID),
-			NovelID: string(n.ID),
-			Content: n.Content,
-		}
-
-		scenes, err := s.dividerService.DivideChapterIntoScenes(ctx, chapterData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to divide novel: %w", err)
-		}
-
-		allScenes = scenes
-	}
-
-	// 更新进度详情
-	details.ScenesDivided = len(allScenes)
-	t.UpdateProgress("划分场景", 4, 67, details)
-	s.taskRepo.Save(ctx, t)
-
-	return allScenes, nil
-}
-
-// 步骤5: 生成场景图片
-func (s *MangaWorkflowService) stepGenerateSceneImages(ctx context.Context, t *task.Task, scenes []*scene.Scene, characters []*character.Character) error {
-	if t.IsCancelled() {
-		return fmt.Errorf("task cancelled")
-	}
-
-	details := t.ProgressDetails
-
-	for i, scn := range scenes {
-		if t.IsCancelled() {
-			return fmt.Errorf("task cancelled")
-		}
-
-		// 更新当前进度
+		// 更新进度
+		percentage := (i + 1) * 100 / totalImages
 		details.ScenesGenerated = i
-		t.UpdateProgress("生成场景图片", 5, 83, details)
+		t.UpdateProgress(fmt.Sprintf("生成漫画图片 %d/%d", i+1, totalImages), 1, percentage, details)
 		s.taskRepo.Save(ctx, t)
 
-		// 匹配角色到场景
-		sceneCharacters := s.matchCharactersToScene(scn, characters)
-		scn.SetCharacters(sceneCharacters)
+		// 构建 Prompt：让 Gemini 根据小说内容生成漫画风格的图片
+		prompt := s.buildMangaPanelPrompt(n.Title, contentSummary, i+1, totalImages)
 
-		if err := s.sceneRepo.Save(ctx, scn); err != nil {
-			return fmt.Errorf("failed to save scene: %w", err)
+		// 调用 Gemini 文生图接口
+		req := gemini.TextToImageRequest{
+			Prompt: prompt,
+			Width:  1344,
+			Height: 768,
 		}
 
-		// 生成场景图片
-		if err := s.generateSceneImage(ctx, scn, characters); err != nil {
-			return fmt.Errorf("failed to generate image for scene %d: %w", scn.SceneNumber, err)
+		imageURL, err := s.geminiClient.TextToImage(ctx, req)
+		if err != nil {
+			log.Printf("Failed to generate manga image %d: %v", i+1, err)
+			return fmt.Errorf("failed to generate manga image %d: %w", i+1, err)
 		}
+
+		// 保存 Media 实体
+		mediaEntity := media.NewMedia(fmt.Sprintf("%s-panel-%d", n.ID, i+1), media.MediaTypeImage)
+		metadata := media.NewImageMetadata(1344, 768, "image/jpeg", 0)
+		mediaEntity.MarkCompleted(imageURL, metadata)
+
+		if err := s.mediaRepo.Save(ctx, mediaEntity); err != nil {
+			return fmt.Errorf("failed to save media %d: %w", i+1, err)
+		}
+
+		log.Printf("Successfully generated manga image %d/%d for novel %s", i+1, totalImages, n.ID)
 	}
 
-	// 完成场景图片生成
-	details.ScenesGenerated = len(scenes)
-	t.UpdateProgress("生成场景图片", 5, 83, details)
+	// 完成所有图片生成
+	details.ScenesGenerated = totalImages
+	t.UpdateProgress("生成漫画图片完成", 1, 100, details)
 	s.taskRepo.Save(ctx, t)
 
 	return nil
+}
+
+// buildMangaPanelPrompt 构建漫画面板的 Prompt
+func (s *MangaWorkflowService) buildMangaPanelPrompt(title, content string, panelNum, totalPanels int) string {
+	// 为不同的面板生成不同的 Prompt，确保故事连贯性
+	stageDesc := ""
+	switch {
+	case panelNum <= 2:
+		stageDesc = "opening scene, introducing the setting and atmosphere"
+	case panelNum <= 4:
+		stageDesc = "introducing main characters and their personalities"
+	case panelNum <= 7:
+		stageDesc = "developing the plot with key story events"
+	case panelNum <= 9:
+		stageDesc = "building toward the climax with tension and drama"
+	default:
+		stageDesc = "conclusion or cliffhanger ending"
+	}
+
+	prompt := fmt.Sprintf(
+		"Create a beautiful anime manga panel (image %d of %d) based on the novel titled '%s'. "+
+			"Story context: %s. "+
+			"This panel should depict: %s. "+
+			"Style: Professional anime manga art with clean lines, dynamic composition, expressive characters, "+
+			"cinematic lighting, and detailed backgrounds. "+
+			"Use vibrant colors and dramatic angles typical of high-quality manga adaptations. "+
+			"Make it visually engaging and emotionally resonant.",
+		panelNum, totalPanels, title, content, stageDesc,
+	)
+
+	return prompt
 }
 
 func (s *MangaWorkflowService) generateCharacterReferenceImage(ctx context.Context, char *character.Character) error {
@@ -483,12 +375,12 @@ func (s *MangaWorkflowService) GetTaskStatus(ctx context.Context, userID, taskID
 		Progress: dto.TaskProgressResponse{
 			CurrentStep:      taskEntity.ProgressStep,
 			CurrentStepIndex: taskEntity.ProgressStepIndex,
-			TotalSteps:       6,
+			TotalSteps:       2,
 			Percentage:       taskEntity.ProgressPercentage,
 			Details: &dto.TaskProgressDetailsResponse{
-				CharactersExtracted: taskEntity.ProgressDetails.CharactersExtracted,
-				CharactersGenerated: taskEntity.ProgressDetails.CharactersGenerated,
-				ScenesDivided:       taskEntity.ProgressDetails.ScenesDivided,
+				CharactersExtracted: 0,
+				CharactersGenerated: 0,
+				ScenesDivided:       0,
 				ScenesGenerated:     taskEntity.ProgressDetails.ScenesGenerated,
 			},
 		},
@@ -528,46 +420,32 @@ func (s *MangaWorkflowService) buildTaskResult(ctx context.Context, t *task.Task
 		return nil, err
 	}
 
-	// 加载角色
-	characters, err := s.characterRepo.FindByNovelID(ctx, t.NovelID)
-	if err != nil {
-		return nil, err
-	}
+	// 加载生成的漫画图片
+	// 使用 novel ID 作为前缀查找所有相关的 media
+	var mangaImages []dto.TaskSceneResponse
+	for i := 1; i <= 10; i++ {
+		mediaID := fmt.Sprintf("%s-panel-%d", t.NovelID, i)
+		mediaEntity, err := s.mediaRepo.FindByID(ctx, media.MediaID(mediaID))
+		if err != nil {
+			log.Printf("Media not found for panel %d: %v", i, err)
+			continue
+		}
 
-	// 加载场景
-	scenes, err := s.sceneRepo.FindByNovelID(ctx, t.NovelID)
-	if err != nil {
-		return nil, err
-	}
-
-	// 构建角色列表
-	characterResponses := make([]dto.TaskCharacterResponse, 0, len(characters))
-	for _, char := range characters {
-		characterResponses = append(characterResponses, dto.TaskCharacterResponse{
-			ID:                string(char.ID),
-			Name:              char.Name,
-			ReferenceImageURL: char.ReferenceImageURL,
-		})
-	}
-
-	// 构建场景列表
-	sceneResponses := make([]dto.TaskSceneResponse, 0, len(scenes))
-	for _, sc := range scenes {
-		sceneResponses = append(sceneResponses, dto.TaskSceneResponse{
-			ID:          string(sc.ID),
-			SequenceNum: sc.SceneNumber,
-			Description: sc.Description.FullText,
-			ImageURL:    "", // TODO: 从 Media 中获取图片URL
+		mangaImages = append(mangaImages, dto.TaskSceneResponse{
+			ID:          string(mediaEntity.ID),
+			SequenceNum: i,
+			Description: fmt.Sprintf("漫画面板 %d", i),
+			ImageURL:    mediaEntity.URL,
 		})
 	}
 
 	return &dto.TaskResultResponse{
 		NovelID:        string(novelEntity.ID),
 		Title:          novelEntity.Title,
-		CharacterCount: len(characters),
-		SceneCount:     len(scenes),
-		Characters:     characterResponses,
-		Scenes:         sceneResponses,
+		CharacterCount: 0,
+		SceneCount:     len(mangaImages),
+		Characters:     []dto.TaskCharacterResponse{},
+		Scenes:         mangaImages,
 	}, nil
 }
 
@@ -604,8 +482,8 @@ func (s *MangaWorkflowService) GetTaskList(ctx context.Context, userID string, p
 
 		// 如果任务完成，添加统计信息
 		if t.Status == task.TaskStatusCompleted {
-			item.CharacterCount = t.ProgressDetails.CharactersGenerated
-			item.SceneCount = t.ProgressDetails.ScenesGenerated
+			item.CharacterCount = 0
+			item.SceneCount = t.ProgressDetails.ScenesGenerated // 漫画图片数量
 		}
 
 		// 如果任务失败，添加错误信息

@@ -15,7 +15,7 @@ import {
 
 function HomePage() {
   const navigate = useNavigate();
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState('在一个阳光明媚的午后，年轻的魔法师艾莉丝站在古老的魔法学院门前。她有着一头乌黑的长发和明亮的蓝色眼睛，穿着一身深蓝色的魔法师长袍。今天是她成为正式魔法师的第一天，心中既兴奋又紧张。学院的大门缓缓打开，里面传来悠扬的魔法钟声。');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,6 +91,7 @@ function HomePage() {
 
       const response = await taskApi.createTask({
         title: content.substring(0, 50) + '...',
+        author: '匿名作者',
         content,
       });
 

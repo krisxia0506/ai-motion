@@ -248,25 +248,27 @@ const TaskDetailPage: React.FC = () => {
             </div>
 
             {/* Summary Stats */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-xl border border-primary-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <MdPerson className="w-6 h-6 text-primary-600" />
-                  <p className="text-gray-700 font-medium">角色数量</p>
+            {taskData.result && (
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                <div className="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-xl border border-primary-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <MdPerson className="w-6 h-6 text-primary-600" />
+                    <p className="text-gray-700 font-medium">角色数量</p>
+                  </div>
+                  <p className="text-4xl font-bold text-primary-700">{taskData.result.character_count}</p>
                 </div>
-                <p className="text-4xl font-bold text-primary-700">{taskData.result.character_count}</p>
-              </div>
-              <div className="bg-gradient-to-br from-success-50 to-success-100 p-6 rounded-xl border border-success-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <MdTheaters className="w-6 h-6 text-success-600" />
-                  <p className="text-gray-700 font-medium">场景数量</p>
+                <div className="bg-gradient-to-br from-success-50 to-success-100 p-6 rounded-xl border border-success-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <MdTheaters className="w-6 h-6 text-success-600" />
+                    <p className="text-gray-700 font-medium">场景数量</p>
+                  </div>
+                  <p className="text-4xl font-bold text-success-700">{taskData.result.scene_count}</p>
                 </div>
-                <p className="text-4xl font-bold text-success-700">{taskData.result.scene_count}</p>
               </div>
-            </div>
+            )}
 
             {/* Characters */}
-            {taskData.result.characters.length > 0 && (
+            {taskData.result && taskData.result.characters.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <MdPerson className="w-5 h-5 text-primary-600" />
@@ -299,7 +301,7 @@ const TaskDetailPage: React.FC = () => {
             )}
 
             {/* Scenes */}
-            {taskData.result.scenes.length > 0 && (
+            {taskData.result && taskData.result.scenes.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <MdTheaters className="w-5 h-5 text-success-600" />
