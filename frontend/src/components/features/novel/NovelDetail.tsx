@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, LoadingSpinner, ErrorMessage, Card } from '../../common';
 import type { Novel, Chapter } from '../../../types';
 import './NovelDetail.css';
@@ -22,12 +22,7 @@ export const NovelDetail: React.FC<NovelDetailProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<'info' | 'chapters'>('info');
 
-  useEffect(() => {
-    fetchNovelDetail();
-    fetchChapters();
-  }, [novelId]);
-
-  const fetchNovelDetail = async () => {
+  const fetchNovelDetail = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -42,9 +37,9 @@ export const NovelDetail: React.FC<NovelDetailProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [novelId]);
 
-  const fetchChapters = async () => {
+  const fetchChapters = useCallback(async () => {
     try {
       const response = await fetch(`/api/v1/novels/${novelId}/chapters`);
       if (!response.ok) throw new Error('Failed to fetch chapters');
@@ -54,7 +49,12 @@ export const NovelDetail: React.FC<NovelDetailProps> = ({
     } catch (err) {
       console.error('Failed to load chapters:', err);
     }
-  };
+  }, [novelId]);
+
+  useEffect(() => {
+    fetchNovelDetail();
+    fetchChapters();
+  }, [fetchNovelDetail, fetchChapters]);
 
   const handleParse = async () => {
     try {

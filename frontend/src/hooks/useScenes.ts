@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Scene, ApiError } from '../types';
 import { sceneApi } from '../services';
 import { useSceneStore } from '../store';
@@ -15,7 +15,7 @@ export const useScenes = (novelId: string, chapterId?: string): UseScenesResult 
   const [error, setError] = useState<ApiError | null>(null);
   const { scenes, setScenes, setError: setStoreError } = useSceneStore();
 
-  const fetchScenes = async () => {
+  const fetchScenes = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -30,13 +30,13 @@ export const useScenes = (novelId: string, chapterId?: string): UseScenesResult 
     } finally {
       setLoading(false);
     }
-  };
+  }, [novelId, chapterId, setScenes, setStoreError]);
 
   useEffect(() => {
     if (novelId) {
       fetchScenes();
     }
-  }, [novelId, chapterId]);
+  }, [novelId, fetchScenes]);
 
   return {
     scenes: chapterId
