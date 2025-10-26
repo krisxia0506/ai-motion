@@ -25,8 +25,9 @@ type DatabaseConfig struct {
 }
 
 type SupabaseConfig struct {
-	URL    string
-	APIKey string
+	URL       string
+	APIKey    string
+	JWTSecret string
 }
 
 func Load() (*Config, error) {
@@ -47,8 +48,9 @@ func Load() (*Config, error) {
 			Database: getEnv("DB_NAME", "ai_motion"),
 		},
 		Supabase: SupabaseConfig{
-			URL:    getEnv("SUPABASE_URL", ""),
-			APIKey: getEnv("SUPABASE_API_KEY", ""),
+			URL:       getEnv("SUPABASE_URL", ""),
+			APIKey:    getEnv("SUPABASE_API_KEY", ""),
+			JWTSecret: getEnv("SUPABASE_JWT_SECRET", ""),
 		},
 	}, nil
 }
