@@ -8,13 +8,17 @@ interface NovelUploadProps {
   onUploadError?: (error: Error) => void;
 }
 
+type InputMode = 'file' | 'text';
+
 export const NovelUpload: React.FC<NovelUploadProps> = ({
   onUploadSuccess,
   onUploadError,
 }) => {
+  const [inputMode, setInputMode] = useState<InputMode>('file');
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
+  const [textContent, setTextContent] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -77,11 +81,33 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
     }
   };
 
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        resolve(content);
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!file || !title) {
-      setError('Please select a file and provide a title');
+    if (!title) {
+      setError('Please provide a title');
+      return;
+    }
+
+    if (inputMode === 'file' && !file) {
+      setError('Please select a file');
+      return;
+    }
+
+    if (inputMode === 'text' && !textContent.trim()) {
+      setError('Please enter novel content');
       return;
     }
 
@@ -90,39 +116,51 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
     setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', title);
-      formData.append('author', author);
+      let content = '';
+
+      if (inputMode === 'file' && file) {
+        content = await readFileContent(file);
+      } else {
+        content = textContent;
+      }
 
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
-      const response = await fetch('/api/v1/novels/upload', {
+      const response = await fetch('/api/v1/manga/generate', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          author: author || 'Unknown',
+          content,
+        }),
       });
 
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.details || 'Generation failed');
       }
 
       const data = await response.json();
       setUploadProgress(100);
 
       setTimeout(() => {
-        onUploadSuccess?.(data.novel);
+        onUploadSuccess?.(data.data);
         setFile(null);
         setTitle('');
         setAuthor('');
+        setTextContent('');
         setUploadProgress(0);
         setIsUploading(false);
       }, 500);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Upload failed');
+      const error = err instanceof Error ? err : new Error('Generation failed');
       setError(error.message);
       onUploadError?.(error);
       setIsUploading(false);
@@ -132,56 +170,97 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
 
   return (
     <div className="novel-upload">
-      <h2 className="novel-upload-title">Upload Novel</h2>
+      <h2 className="novel-upload-title">Generate Manga</h2>
 
       <form onSubmit={handleSubmit} className="novel-upload-form">
-        <div
-          className={`novel-upload-dropzone ${isDragging ? 'dragging' : ''} ${
-            file ? 'has-file' : ''
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          {!file ? (
-            <>
-              <div className="dropzone-icon">📄</div>
-              <p className="dropzone-text">
-                Drag and drop your novel file here, or
-              </p>
-              <label htmlFor="file-input" className="dropzone-browse-btn">
-                Browse Files
-              </label>
-              <input
-                id="file-input"
-                type="file"
-                accept=".txt,.doc,.docx"
-                onChange={handleFileInputChange}
-                className="dropzone-file-input"
-              />
-              <p className="dropzone-hint">
-                Supported formats: TXT, DOC, DOCX (Max 10MB)
-              </p>
-            </>
-          ) : (
-            <div className="dropzone-file-info">
-              <div className="file-info-icon">📄</div>
-              <div className="file-info-details">
-                <p className="file-info-name">{file.name}</p>
-                <p className="file-info-size">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setFile(null)}
-                className="file-info-remove-btn"
-              >
-                ✕
-              </button>
-            </div>
-          )}
+        {/* Input Mode Switcher */}
+        <div className="input-mode-switcher">
+          <button
+            type="button"
+            className={`mode-btn ${inputMode === 'file' ? 'active' : ''}`}
+            onClick={() => setInputMode('file')}
+            disabled={isUploading}
+          >
+            📁 Upload File
+          </button>
+          <button
+            type="button"
+            className={`mode-btn ${inputMode === 'text' ? 'active' : ''}`}
+            onClick={() => setInputMode('text')}
+            disabled={isUploading}
+          >
+            ✏️ Input Text
+          </button>
         </div>
+
+        {/* File Upload Mode */}
+        {inputMode === 'file' && (
+          <div
+            className={`novel-upload-dropzone ${isDragging ? 'dragging' : ''} ${
+              file ? 'has-file' : ''
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            {!file ? (
+              <>
+                <div className="dropzone-icon">📄</div>
+                <p className="dropzone-text">
+                  Drag and drop your novel file here, or
+                </p>
+                <label htmlFor="file-input" className="dropzone-browse-btn">
+                  Browse Files
+                </label>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept=".txt,.doc,.docx"
+                  onChange={handleFileInputChange}
+                  className="dropzone-file-input"
+                />
+                <p className="dropzone-hint">
+                  Supported formats: TXT, DOC, DOCX (Max 10MB)
+                </p>
+              </>
+            ) : (
+              <div className="dropzone-file-info">
+                <div className="file-info-icon">📄</div>
+                <div className="file-info-details">
+                  <p className="file-info-name">{file.name}</p>
+                  <p className="file-info-size">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFile(null)}
+                  className="file-info-remove-btn"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Text Input Mode */}
+        {inputMode === 'text' && (
+          <div className="text-input-area">
+            <label htmlFor="text-content" className="form-label">
+              Novel Content *
+            </label>
+            <textarea
+              id="text-content"
+              value={textContent}
+              onChange={(e) => setTextContent(e.target.value)}
+              placeholder="Paste or type your novel content here..."
+              disabled={isUploading}
+              className="form-textarea"
+              rows={10}
+            />
+          </div>
+        )}
 
         {error && <ErrorMessage message={error} onRetry={() => setError(null)} />}
 
@@ -195,7 +274,7 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter novel title"
+              placeholder="Enter manga title"
               required
               disabled={isUploading}
               className="form-input"
@@ -223,7 +302,7 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
             <ProgressBar
               value={uploadProgress}
               showLabel
-              label={`Uploading... ${uploadProgress}%`}
+              label={`Generating... ${uploadProgress}%`}
             />
           </div>
         )}
@@ -231,10 +310,15 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
         <div className="novel-upload-actions">
           <Button
             type="submit"
-            disabled={!file || !title || isUploading}
+            disabled={
+              !title ||
+              isUploading ||
+              (inputMode === 'file' && !file) ||
+              (inputMode === 'text' && !textContent.trim())
+            }
             className="upload-submit-btn"
           >
-            {isUploading ? 'Uploading...' : 'Upload Novel'}
+            {isUploading ? 'Generating...' : 'Generate Manga'}
           </Button>
         </div>
       </form>

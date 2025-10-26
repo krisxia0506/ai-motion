@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdUploadFile, MdAutoAwesome, MdPerson, MdMovie, MdVolumeUp } from 'react-icons/md';
+import { MdUploadFile, MdAutoAwesome, MdPerson, MdMovie, MdVolumeUp, MdEdit } from 'react-icons/md';
 import { Button, Card, CardBody } from '../components/common';
-import { novelApi } from '../services/novelApi';
 import './HomePage.css';
 
+type InputMode = 'file' | 'text';
+
 function HomePage() {
+  const [inputMode, setInputMode] = useState<InputMode>('file');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [textContent, setTextContent] = useState('');
+  const [title, setTitle] = useState('');
+  const [author, setAuthor] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -16,20 +21,73 @@ function HomePage() {
     if (file) {
       setSelectedFile(file);
       setError(null);
+      if (!title) {
+        setTitle(file.name.replace(/\.[^/.]+$/, ''));
+      }
     }
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) return;
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        resolve(content);
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
+  };
+
+  const handleGenerate = async () => {
+    if (!title) {
+      setError('请输入标题');
+      return;
+    }
+
+    if (inputMode === 'file' && !selectedFile) {
+      setError('请选择文件');
+      return;
+    }
+
+    if (inputMode === 'text' && !textContent.trim()) {
+      setError('请输入小说内容');
+      return;
+    }
 
     try {
       setUploading(true);
       setError(null);
 
-      await novelApi.uploadNovelFile(selectedFile);
-      navigate('/novels');
-    } catch {
-      setError('上传失败，请重试');
+      let content = '';
+      if (inputMode === 'file' && selectedFile) {
+        content = await readFileContent(selectedFile);
+      } else {
+        content = textContent;
+      }
+
+      const response = await fetch('/api/v1/manga/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          author: author || 'Unknown',
+          content,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.details || '生成失败');
+      }
+
+      const data = await response.json();
+      navigate(`/novels/${data.data.novel_id}`);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('生成失败');
+      setError(error.message);
     } finally {
       setUploading(false);
     }
@@ -76,60 +134,125 @@ function HomePage() {
           <Card className="upload-card">
             <CardBody>
               <h2 className="upload-title">
-                <MdUploadFile size={28} />
-                上传小说开始创作
+                <MdAutoAwesome size={28} />
+                生成漫画开始创作
               </h2>
 
-              <div className="upload-area">
-                <input
-                  type="file"
-                  accept=".txt,.epub,.pdf"
-                  onChange={handleFileChange}
-                  id="file-upload"
-                  className="file-input"
-                />
-                <label htmlFor="file-upload" className="file-label">
-                  {selectedFile ? (
-                    <div className="file-selected">
-                      <MdUploadFile size={48} />
-                      <span className="file-name">{selectedFile.name}</span>
-                      <span className="file-size">
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="file-placeholder">
-                      <MdUploadFile size={48} />
-                      <span>点击选择文件或拖拽文件到此处</span>
-                      <span className="file-hint">支持 .txt, .epub, .pdf 格式</span>
-                    </div>
-                  )}
-                </label>
+              {/* Input Mode Switcher */}
+              <div className="mode-switcher">
+                <button
+                  type="button"
+                  className={`mode-btn ${inputMode === 'file' ? 'active' : ''}`}
+                  onClick={() => setInputMode('file')}
+                  disabled={uploading}
+                >
+                  <MdUploadFile size={20} />
+                  <span>上传文件</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mode-btn ${inputMode === 'text' ? 'active' : ''}`}
+                  onClick={() => setInputMode('text')}
+                  disabled={uploading}
+                >
+                  <MdEdit size={20} />
+                  <span>输入文本</span>
+                </button>
+              </div>
+
+              {/* File Upload Mode */}
+              {inputMode === 'file' && (
+                <div className="upload-area">
+                  <input
+                    type="file"
+                    accept=".txt,.doc,.docx"
+                    onChange={handleFileChange}
+                    id="file-upload"
+                    className="file-input"
+                  />
+                  <label htmlFor="file-upload" className="file-label">
+                    {selectedFile ? (
+                      <div className="file-selected">
+                        <MdUploadFile size={48} />
+                        <span className="file-name">{selectedFile.name}</span>
+                        <span className="file-size">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="file-placeholder">
+                        <MdUploadFile size={48} />
+                        <span>点击选择文件或拖拽文件到此处</span>
+                        <span className="file-hint">支持 .txt, .doc, .docx 格式</span>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              )}
+
+              {/* Text Input Mode */}
+              {inputMode === 'text' && (
+                <div className="text-input-area">
+                  <textarea
+                    value={textContent}
+                    onChange={(e) => setTextContent(e.target.value)}
+                    placeholder="在此粘贴或输入小说内容..."
+                    disabled={uploading}
+                    className="text-input"
+                    rows={6}
+                  />
+                </div>
+              )}
+
+              {/* Title and Author Fields */}
+              <div className="metadata-fields">
+                <div className="form-field">
+                  <label htmlFor="title" className="field-label">
+                    标题 *
+                  </label>
+                  <input
+                    id="title"
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="请输入漫画标题"
+                    disabled={uploading}
+                    className="field-input"
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="author" className="field-label">
+                    作者
+                  </label>
+                  <input
+                    id="author"
+                    type="text"
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
+                    placeholder="请输入作者名称（可选）"
+                    disabled={uploading}
+                    className="field-input"
+                  />
+                </div>
               </div>
 
               {error && <div className="upload-error">{error}</div>}
 
               <div className="upload-actions">
-                {selectedFile && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedFile(null);
-                      setError(null);
-                    }}
-                  >
-                    重新选择
-                  </Button>
-                )}
                 <Button
                   variant="primary"
                   size="large"
-                  fullWidth={!selectedFile}
-                  onClick={handleUpload}
-                  disabled={!selectedFile || uploading}
+                  fullWidth
+                  onClick={handleGenerate}
+                  disabled={
+                    !title ||
+                    uploading ||
+                    (inputMode === 'file' && !selectedFile) ||
+                    (inputMode === 'text' && !textContent.trim())
+                  }
                   loading={uploading}
                 >
-                  {uploading ? '上传中...' : '开始上传'}
+                  {uploading ? '生成中...' : '开始生成'}
                 </Button>
               </div>
             </CardBody>
@@ -155,7 +278,7 @@ function HomePage() {
           <h2 className="section-title">工作流程</h2>
           <div className="workflow-steps">
             {[
-              '上传小说文件',
+              '上传文件或输入文本',
               '自动解析内容',
               '识别角色与场景',
               '生成动漫画面',
