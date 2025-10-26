@@ -1,1 +1,2 @@
-DROP TABLE IF EXISTS novels;
+-- PostgreSQL migration: Drop novels table
+DROP TABLE IF EXISTS aimotion_novel;

@@ -18,7 +18,7 @@ AI-Motion 是一个创新的自动化动漫生成平台，能够将文字小说�
 
 ### 技术栈
 
-- **后端**: Go 1.24+ | Gin | DDD 架构 | MySQL 8.0+
+- **后端**: Go 1.24+ | Gin | DDD 架构 | Supabase (PostgreSQL)
 - **前端**: React 19 + TypeScript | Vite 7 | Tailwind CSS
 - **AI 服务**: Gemini 2.5 Flash Image (文生图/图生图) | Sora2 (视频生成)
 - **DevOps**: Docker + Docker Compose

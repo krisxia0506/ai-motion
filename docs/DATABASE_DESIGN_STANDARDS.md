@@ -2,6 +2,8 @@
 
 本文档基于《阿里巴巴Java开发手册》的数据库设计规范,结合 AI-Motion 项目实际情况制定。
 
+**注意**: AI-Motion 现已迁移至 Supabase (PostgreSQL + PostgREST)。本文档同时包含 PostgreSQL 相关规范。
+
 ## 目录
 
 - [命名规范](#命名规范)
@@ -20,7 +22,10 @@
 **规则**: 库名与应用名称尽量一致
 
 ```sql
--- ✅ 正确
+-- ✅ 正确 (PostgreSQL)
+CREATE DATABASE aimotion WITH ENCODING 'UTF8';
+
+-- ✅ 正确 (MySQL - 已废弃)
 CREATE DATABASE aimotion CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ❌ 错误
@@ -78,6 +83,24 @@ isDeleted TINYINT            -- 驼峰命名
 
 **规则**: 每张表必须包含 `id`, `gmt_create`, `gmt_modified`, `is_deleted`
 
+**PostgreSQL 版本**:
+```sql
+CREATE TABLE aimotion_example (
+    id BIGSERIAL PRIMARY KEY,
+    -- 业务字段...
+    is_deleted SMALLINT DEFAULT 0 CHECK (is_deleted IN (0, 1)),
+    gmt_create TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    gmt_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE aimotion_example IS '示例表';
+COMMENT ON COLUMN aimotion_example.id IS '主键ID';
+COMMENT ON COLUMN aimotion_example.is_deleted IS '逻辑删除:0-未删除,1-已删除';
+COMMENT ON COLUMN aimotion_example.gmt_create IS '创建时间';
+COMMENT ON COLUMN aimotion_example.gmt_modified IS '修改时间';
+```
+
+**MySQL 版本 (已废弃)**:
 ```sql
 CREATE TABLE aimotion_example (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
@@ -89,27 +112,32 @@ CREATE TABLE aimotion_example (
 ```
 
 **说明**:
-- `id`: 必为主键,类型为 `BIGINT UNSIGNED`,单表时自增、步长为 1
+- `id`: 必为主键,PostgreSQL 使用 `BIGSERIAL` 自增 (MySQL 使用 `BIGINT UNSIGNED AUTO_INCREMENT`)
 - 如果使用分库分表,则 `id` 类型为 `VARCHAR`,非自增,使用分布式ID生成器
-- `gmt_create`: 创建时间,类型为 `DATETIME`
-- `gmt_modified`: 修改时间,类型为 `DATETIME`
-- `is_deleted`: 逻辑删除标识,类型为 `TINYINT UNSIGNED` (1表示删除,0表示未删除)
+- `gmt_create`: 创建时间,PostgreSQL 使用 `TIMESTAMP` (MySQL 使用 `DATETIME`)
+- `gmt_modified`: 修改时间,PostgreSQL 使用 `TIMESTAMP` (MySQL 使用 `DATETIME`)
+- `is_deleted`: 逻辑删除标识,PostgreSQL 使用 `SMALLINT` (MySQL 使用 `TINYINT UNSIGNED`),1表示删除,0表示未删除
 
 ### 2. 数据类型选择
 
 #### 整数类型
-- 非负数必须使用 `UNSIGNED`
-- 主键使用 `BIGINT UNSIGNED AUTO_INCREMENT`
+- **PostgreSQL**: 主键使用 `BIGSERIAL`,其他整数使用 `INTEGER`, `SMALLINT` 等,添加 `CHECK` 约束确保非负
+- **MySQL (已废弃)**: 非负数必须使用 `UNSIGNED`,主键使用 `BIGINT UNSIGNED AUTO_INCREMENT`
 
 ```sql
--- ✅ 正确
+-- ✅ 正确 (PostgreSQL)
+id BIGSERIAL PRIMARY KEY
+sequence_num INTEGER CHECK (sequence_num >= 0)
+is_deleted SMALLINT DEFAULT 0 CHECK (is_deleted IN (0, 1))
+
+-- ✅ 正确 (MySQL - 已废弃)
 id BIGINT UNSIGNED AUTO_INCREMENT
 sequence_num INT UNSIGNED
 is_deleted TINYINT UNSIGNED
 
 -- ❌ 错误
-id INT                    -- 应使用 BIGINT UNSIGNED
-age INT                   -- 年龄非负,应使用 INT UNSIGNED
+id INT                    -- 应使用 BIGSERIAL (PostgreSQL) 或 BIGINT UNSIGNED (MySQL)
+age INT                   -- 年龄非负,应添加 CHECK 约束或使用 UNSIGNED
 ```
 
 #### 小数类型
@@ -132,37 +160,51 @@ rate DOUBLE              -- 禁止使用 DOUBLE
 - 超长文本使用 `TEXT`,独立出来一张表
 
 ```sql
--- ✅ 正确
-country_code CHAR(2) COMMENT '国家代码'
-title VARCHAR(255) COMMENT '标题'
-name VARCHAR(100) COMMENT '姓名'
+-- ✅ 正确 (PostgreSQL)
+country_code CHAR(2)
+title VARCHAR(255)
+name VARCHAR(100)
 
--- 超长文本独立表
+COMMENT ON COLUMN table_name.country_code IS '国家代码';
+COMMENT ON COLUMN table_name.title IS '标题';
+COMMENT ON COLUMN table_name.name IS '姓名';
+
+-- 超长文本独立表 (PostgreSQL)
 CREATE TABLE aimotion_novel_content (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    novel_id BIGINT UNSIGNED NOT NULL COMMENT '小说ID',
-    content LONGTEXT COMMENT '小说内容',
-    gmt_create DATETIME NOT NULL,
-    gmt_modified DATETIME NOT NULL,
-    INDEX idx_novel_id (novel_id)
+    id BIGSERIAL PRIMARY KEY,
+    novel_id BIGINT NOT NULL,
+    content TEXT,
+    gmt_create TIMESTAMP NOT NULL,
+    gmt_modified TIMESTAMP NOT NULL
 );
+
+CREATE INDEX idx_novel_id ON aimotion_novel_content(novel_id);
 
 -- ❌ 错误
 content VARCHAR(10000)    -- 超过5000,应使用 TEXT 并独立表
 ```
 
 #### 布尔类型
-- 使用 `TINYINT UNSIGNED` 表示是与否
+- **PostgreSQL**: 可使用 `BOOLEAN` 或 `SMALLINT` 配合 `CHECK` 约束
+- **MySQL (已废弃)**: 使用 `TINYINT UNSIGNED` 表示是与否
 - 必须使用 `is_xxx` 命名
 
 ```sql
--- ✅ 正确
+-- ✅ 正确 (PostgreSQL - 推荐)
+is_deleted BOOLEAN DEFAULT FALSE
+is_active BOOLEAN DEFAULT TRUE
+
+-- ✅ 正确 (PostgreSQL - 兼容方式)
+is_deleted SMALLINT DEFAULT 0 CHECK (is_deleted IN (0, 1))
+is_active SMALLINT DEFAULT 1 CHECK (is_active IN (0, 1))
+
+-- ✅ 正确 (MySQL - 已废弃)
 is_deleted TINYINT UNSIGNED DEFAULT 0 COMMENT '0-未删除,1-已删除'
 is_active TINYINT UNSIGNED DEFAULT 1 COMMENT '0-未激活,1-已激活'
 
 -- ❌ 错误
-deleted BOOLEAN           -- 应使用 TINYINT UNSIGNED
-active TINYINT            -- 应使用 UNSIGNED
+deleted BOOLEAN           -- 缺少 is_ 前缀
+active SMALLINT           -- 缺少 CHECK 约束
 ```
 
 ---
@@ -327,42 +369,66 @@ aimotion_scene_15  -- 16张表
 
 ### 1. 基础表模板
 
+**PostgreSQL 版本**:
 ```sql
 CREATE TABLE aimotion_example (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    id BIGSERIAL PRIMARY KEY,
     
     -- 业务字段
-    name VARCHAR(100) NOT NULL COMMENT '名称',
-    type TINYINT UNSIGNED DEFAULT 0 COMMENT '类型:0-类型A,1-类型B',
-    amount DECIMAL(10, 2) DEFAULT 0.00 COMMENT '金额',
+    name VARCHAR(100) NOT NULL,
+    type SMALLINT DEFAULT 0 CHECK (type IN (0, 1)),
+    amount DECIMAL(10, 2) DEFAULT 0.00,
     
     -- 必备字段
-    is_deleted TINYINT UNSIGNED DEFAULT 0 COMMENT '逻辑删除:0-未删除,1-已删除',
-    gmt_create DATETIME NOT NULL COMMENT '创建时间',
-    gmt_modified DATETIME NOT NULL COMMENT '修改时间',
-    
-    -- 索引
-    INDEX idx_type (type),
-    INDEX idx_gmt_create (gmt_create)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='示例表';
+    is_deleted SMALLINT DEFAULT 0 CHECK (is_deleted IN (0, 1)),
+    gmt_create TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    gmt_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 添加注释
+COMMENT ON TABLE aimotion_example IS '示例表';
+COMMENT ON COLUMN aimotion_example.id IS '主键ID';
+COMMENT ON COLUMN aimotion_example.name IS '名称';
+COMMENT ON COLUMN aimotion_example.type IS '类型:0-类型A,1-类型B';
+COMMENT ON COLUMN aimotion_example.amount IS '金额';
+COMMENT ON COLUMN aimotion_example.is_deleted IS '逻辑删除:0-未删除,1-已删除';
+COMMENT ON COLUMN aimotion_example.gmt_create IS '创建时间';
+COMMENT ON COLUMN aimotion_example.gmt_modified IS '修改时间';
+
+-- 索引
+CREATE INDEX idx_type ON aimotion_example(type);
+CREATE INDEX idx_gmt_create ON aimotion_example(gmt_create);
 ```
 
 ### 2. 关联表模板
 
+**PostgreSQL 版本**:
 ```sql
 CREATE TABLE aimotion_scene_character (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
-    scene_id BIGINT UNSIGNED NOT NULL COMMENT '场景ID',
-    character_id BIGINT UNSIGNED NOT NULL COMMENT '角色ID',
-    role_type TINYINT UNSIGNED DEFAULT 0 COMMENT '角色类型:0-主角,1-配角',
+    id BIGSERIAL PRIMARY KEY,
+    scene_id BIGINT NOT NULL,
+    character_id BIGINT NOT NULL,
+    role_type SMALLINT DEFAULT 0 CHECK (role_type IN (0, 1)),
     
-    is_deleted TINYINT UNSIGNED DEFAULT 0 COMMENT '逻辑删除',
-    gmt_create DATETIME NOT NULL COMMENT '创建时间',
-    gmt_modified DATETIME NOT NULL COMMENT '修改时间',
+    is_deleted SMALLINT DEFAULT 0 CHECK (is_deleted IN (0, 1)),
+    gmt_create TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    gmt_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    UNIQUE KEY uk_scene_character (scene_id, character_id),
-    INDEX idx_character_id (character_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='场景角色关联表';
+    CONSTRAINT uk_scene_character UNIQUE (scene_id, character_id)
+);
+
+-- 注释
+COMMENT ON TABLE aimotion_scene_character IS '场景角色关联表';
+COMMENT ON COLUMN aimotion_scene_character.id IS '主键ID';
+COMMENT ON COLUMN aimotion_scene_character.scene_id IS '场景ID';
+COMMENT ON COLUMN aimotion_scene_character.character_id IS '角色ID';
+COMMENT ON COLUMN aimotion_scene_character.role_type IS '角色类型:0-主角,1-配角';
+COMMENT ON COLUMN aimotion_scene_character.is_deleted IS '逻辑删除';
+COMMENT ON COLUMN aimotion_scene_character.gmt_create IS '创建时间';
+COMMENT ON COLUMN aimotion_scene_character.gmt_modified IS '修改时间';
+
+-- 索引
+CREATE INDEX idx_character_id ON aimotion_scene_character(character_id);
 ```
 
 ### 3. AI-Motion 核心表设计

@@ -28,7 +28,7 @@ backend/
 │   │   └── dto/            # Data Transfer Objects
 │   ├── infrastructure/      # Infrastructure Layer - Technical concerns
 │   │   ├── repository/     # Repository implementations
-│   │   │   └── mysql/      # MySQL implementations
+│   │   │   └── supabase/   # Supabase PostgREST implementations
 │   │   ├── ai/             # AI service clients
 │   │   │   ├── gemini/     # Gemini API client
 │   │   │   └── sora/       # Sora2 API client
@@ -263,32 +263,21 @@ func (s *NovelService) toDTO(novel *domain.Novel, charIDs []domain.CharacterID) 
 
 **Example Repository Implementation:**
 ```go
-// internal/infrastructure/repository/mysql/novel_repository.go
-package mysql
+// internal/infrastructure/repository/supabase/novel_repository.go
+package supabase
 
-type MySQLNovelRepository struct {
-    db *sql.DB
+type SupabaseNovelRepository struct {
+    client *postgrest.Client
 }
 
-func NewMySQLNovelRepository(db *sql.DB) domain.NovelRepository {
-    return &MySQLNovelRepository{db: db}
+func NewSupabaseNovelRepository(client *postgrest.Client) domain.NovelRepository {
+    return &SupabaseNovelRepository{client: client}
 }
 
-func (r *MySQLNovelRepository) Save(ctx context.Context, novel *domain.Novel) error {
-    query := `
-        INSERT INTO novels (id, title, author, content, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            title = VALUES(title),
-            content = VALUES(content),
-            status = VALUES(status),
-            updated_at = VALUES(updated_at)
-    `
-
-    _, err := r.db.ExecContext(ctx, query,
-        novel.ID, novel.Title, novel.Author, novel.Content,
-        novel.Status, novel.CreatedAt, novel.UpdatedAt,
-    )
+func (r *SupabaseNovelRepository) Save(ctx context.Context, novel *domain.Novel) error {
+    _, _, err := r.client.From("aimotion_novel").
+        Upsert(novel, "", "", "*").
+        Execute()
 
     if err != nil {
         return fmt.Errorf("failed to save novel: %w", err)
@@ -297,26 +286,23 @@ func (r *MySQLNovelRepository) Save(ctx context.Context, novel *domain.Novel) er
     return nil
 }
 
-func (r *MySQLNovelRepository) FindByID(ctx context.Context, id domain.NovelID) (*domain.Novel, error) {
-    query := `
-        SELECT id, title, author, content, status, created_at, updated_at
-        FROM novels WHERE id = ?
-    `
-
-    var novel domain.Novel
-    err := r.db.QueryRowContext(ctx, query, id).Scan(
-        &novel.ID, &novel.Title, &novel.Author, &novel.Content,
-        &novel.Status, &novel.CreatedAt, &novel.UpdatedAt,
-    )
-
-    if err == sql.ErrNoRows {
-        return nil, domain.ErrNovelNotFound
-    }
+func (r *SupabaseNovelRepository) FindByID(ctx context.Context, id domain.NovelID) (*domain.Novel, error) {
+    var novels []domain.Novel
+    _, _, err := r.client.From("aimotion_novel").
+        Select("*", "exact", false).
+        Eq("id", string(id)).
+        Single().
+        Execute(&novels)
+    
     if err != nil {
         return nil, fmt.Errorf("failed to find novel: %w", err)
     }
+    
+    if len(novels) == 0 {
+        return nil, domain.ErrNovelNotFound
+    }
 
-    return &novel, nil
+    return &novels[0], nil
 }
 ```
 
@@ -646,25 +632,19 @@ func (c *Client) ImageToVideo(ctx context.Context, imageURL string) (string, err
 ### Connection Management
 
 ```go
-// internal/infrastructure/database/mysql.go
-func NewMySQLConnection(cfg *config.DatabaseConfig) (*sql.DB, error) {
-    dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true",
-        cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
+// internal/infrastructure/database/supabase.go
+func NewSupabaseClient(cfg *config.Config) (*postgrest.Client, error) {
+    client := postgrest.NewClient(
+        cfg.SupabaseURL,
+        cfg.SupabaseAPIKey,
+        nil,
+    )
 
-    db, err := sql.Open("mysql", dsn)
-    if err != nil {
-        return nil, err
+    if client == nil {
+        return nil, fmt.Errorf("failed to create Supabase client")
     }
 
-    db.SetMaxOpenConns(25)
-    db.SetMaxIdleConns(5)
-    db.SetConnMaxLifetime(5 * time.Minute)
-
-    if err := db.Ping(); err != nil {
-        return nil, err
-    }
-
-    return db, nil
+    return client, nil
 }
 ```
 
