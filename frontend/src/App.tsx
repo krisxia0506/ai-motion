@@ -3,7 +3,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { LoadingSpinner } from './components/common';
 import { AuthProvider } from './contexts/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const NovelListPage = lazy(() => import('./pages/NovelListPage'));

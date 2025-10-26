@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { taskApi, TaskStatus } from '../services/taskApi';
+import { taskApi, type TaskStatus } from '../services/taskApi';
 
 const TaskDetailPage: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();

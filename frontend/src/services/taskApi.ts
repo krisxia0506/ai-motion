@@ -6,9 +6,11 @@ export interface CreateTaskRequest {
   content: string;
 }
 
+export type TaskStatusType = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+
 export interface TaskStatus {
   task_id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: TaskStatusType;
   progress: {
     current_step: string;
     current_step_index: number;
@@ -47,6 +49,12 @@ export interface TaskStatus {
   updated_at: string;
   completed_at?: string;
   failed_at?: string;
+}
+
+export interface TaskListItem extends TaskStatus {
+  title?: string;
+  character_count?: number;
+  scene_count?: number;
 }
 
 export const taskApi = {

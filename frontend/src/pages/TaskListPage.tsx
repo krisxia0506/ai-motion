@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { taskApi, TaskListItem, TaskStatus } from '../services/taskApi';
+import { taskApi, type TaskListItem, type TaskStatusType } from '../services/taskApi';
 
 const TaskListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,7 +16,11 @@ const TaskListPage: React.FC = () => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const response = await taskApi.getTaskList(currentPage, pageSize, statusFilter);
+      const response = await taskApi.getTaskList({
+        page: currentPage,
+        page_size: pageSize,
+        status: statusFilter || undefined
+      });
       setTasks(response.data.items);
       setTotalPages(response.data.pagination.total_pages);
       setError(null);
@@ -31,7 +35,7 @@ const TaskListPage: React.FC = () => {
     fetchTasks();
   }, [currentPage, statusFilter]);
 
-  const statusColors: Record<TaskStatus, string> = {
+  const statusColors: Record<TaskStatusType, string> = {
     pending: 'bg-gray-200 text-gray-800',
     processing: 'bg-blue-500 text-white',
     completed: 'bg-green-500 text-white',
@@ -39,7 +43,7 @@ const TaskListPage: React.FC = () => {
     cancelled: 'bg-orange-500 text-white',
   };
 
-  const statusLabels: Record<TaskStatus, string> = {
+  const statusLabels: Record<TaskStatusType, string> = {
     pending: '等待中',
     processing: '处理中',
     completed: '已完成',
