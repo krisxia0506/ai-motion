@@ -1,24 +1,28 @@
--- PostgreSQL migration: Create novels table
 CREATE TABLE IF NOT EXISTS aimotion_novel (
-    id BIGSERIAL PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    author VARCHAR(100),
-    status SMALLINT DEFAULT 0 CHECK (status IN (0, 1, 2)),
-    is_deleted SMALLINT DEFAULT 0 CHECK (is_deleted IN (0, 1)),
-    gmt_create TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    gmt_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    author VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    word_count INTEGER NOT NULL DEFAULT 0,
+    chapter_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Comments
-COMMENT ON TABLE aimotion_novel IS '小说表';
-COMMENT ON COLUMN aimotion_novel.id IS '主键ID';
-COMMENT ON COLUMN aimotion_novel.title IS '小说标题';
-COMMENT ON COLUMN aimotion_novel.author IS '作者';
-COMMENT ON COLUMN aimotion_novel.status IS '状态:0-草稿,1-解析中,2-已完成';
-COMMENT ON COLUMN aimotion_novel.is_deleted IS '逻辑删除:0-未删除,1-已删除';
-COMMENT ON COLUMN aimotion_novel.gmt_create IS '创建时间';
-COMMENT ON COLUMN aimotion_novel.gmt_modified IS '修改时间';
+CREATE INDEX IF NOT EXISTS idx_aimotion_novel_status ON aimotion_novel(status);
+CREATE INDEX IF NOT EXISTS idx_aimotion_novel_created_at ON aimotion_novel(created_at);
 
--- Indexes
-CREATE INDEX idx_status ON aimotion_novel(status);
-CREATE INDEX idx_gmt_create ON aimotion_novel(gmt_create);
+-- Trigger to automatically update updated_at
+CREATE OR REPLACE FUNCTION update_aimotion_novel_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_aimotion_novel_updated_at
+    BEFORE UPDATE ON aimotion_novel
+    FOR EACH ROW
+    EXECUTE FUNCTION update_aimotion_novel_updated_at();

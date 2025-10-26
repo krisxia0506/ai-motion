@@ -1,26 +1,31 @@
--- PostgreSQL migration: Create characters table
 CREATE TABLE IF NOT EXISTS aimotion_character (
-    id BIGSERIAL PRIMARY KEY,
-    novel_id BIGINT NOT NULL,
-    name VARCHAR(100) NOT NULL,
+    id VARCHAR(36) PRIMARY KEY,
+    novel_id VARCHAR(36) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
     appearance TEXT,
     personality TEXT,
-    is_deleted SMALLINT DEFAULT 0 CHECK (is_deleted IN (0, 1)),
-    gmt_create TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    gmt_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    description TEXT,
+    reference_image_url VARCHAR(500),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (novel_id) REFERENCES aimotion_novel(id) ON DELETE CASCADE
 );
 
--- Comments
-COMMENT ON TABLE aimotion_character IS '角色表';
-COMMENT ON COLUMN aimotion_character.id IS '主键ID';
-COMMENT ON COLUMN aimotion_character.novel_id IS '小说ID';
-COMMENT ON COLUMN aimotion_character.name IS '角色名称';
-COMMENT ON COLUMN aimotion_character.appearance IS '外貌描述';
-COMMENT ON COLUMN aimotion_character.personality IS '性格描述';
-COMMENT ON COLUMN aimotion_character.is_deleted IS '逻辑删除';
-COMMENT ON COLUMN aimotion_character.gmt_create IS '创建时间';
-COMMENT ON COLUMN aimotion_character.gmt_modified IS '修改时间';
+CREATE INDEX IF NOT EXISTS idx_aimotion_character_novel_id ON aimotion_character(novel_id);
+CREATE INDEX IF NOT EXISTS idx_aimotion_character_role ON aimotion_character(role);
+CREATE INDEX IF NOT EXISTS idx_aimotion_character_name ON aimotion_character(name);
 
--- Indexes
-CREATE INDEX idx_aimotion_character_novel_id ON aimotion_character(novel_id);
-CREATE INDEX idx_name ON aimotion_character(name);
+-- Trigger to automatically update updated_at
+CREATE OR REPLACE FUNCTION update_aimotion_character_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_aimotion_character_updated_at
+    BEFORE UPDATE ON aimotion_character
+    FOR EACH ROW
+    EXECUTE FUNCTION update_aimotion_character_updated_at();

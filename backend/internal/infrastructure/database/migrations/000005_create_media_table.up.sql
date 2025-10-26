@@ -1,29 +1,34 @@
--- PostgreSQL migration: Create media table
 CREATE TABLE IF NOT EXISTS aimotion_media (
-    id BIGSERIAL PRIMARY KEY,
-    type SMALLINT NOT NULL CHECK (type IN (0, 1)),
-    scene_id BIGINT NOT NULL,
-    url VARCHAR(512) NOT NULL,
+    id VARCHAR(36) PRIMARY KEY,
+    scene_id VARCHAR(36) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    file_size BIGINT,
+    duration INTEGER,
+    width INTEGER,
+    height INTEGER,
+    format VARCHAR(50),
     metadata JSONB,
-    status SMALLINT DEFAULT 0 CHECK (status IN (0, 1, 2)),
-    is_deleted SMALLINT DEFAULT 0 CHECK (is_deleted IN (0, 1)),
-    gmt_create TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    gmt_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (scene_id) REFERENCES aimotion_scene(id) ON DELETE CASCADE
 );
 
--- Comments
-COMMENT ON TABLE aimotion_media IS '媒体表';
-COMMENT ON COLUMN aimotion_media.id IS '主键ID';
-COMMENT ON COLUMN aimotion_media.type IS '媒体类型:0-图片,1-视频';
-COMMENT ON COLUMN aimotion_media.scene_id IS '场景ID';
-COMMENT ON COLUMN aimotion_media.url IS '媒体URL';
-COMMENT ON COLUMN aimotion_media.metadata IS '元数据';
-COMMENT ON COLUMN aimotion_media.status IS '状态:0-生成中,1-已完成,2-失败';
-COMMENT ON COLUMN aimotion_media.is_deleted IS '逻辑删除';
-COMMENT ON COLUMN aimotion_media.gmt_create IS '创建时间';
-COMMENT ON COLUMN aimotion_media.gmt_modified IS '修改时间';
+CREATE INDEX IF NOT EXISTS idx_aimotion_media_scene_id ON aimotion_media(scene_id);
+CREATE INDEX IF NOT EXISTS idx_aimotion_media_type ON aimotion_media(type);
+CREATE INDEX IF NOT EXISTS idx_aimotion_media_status ON aimotion_media(status);
 
--- Indexes
-CREATE INDEX idx_scene_id ON aimotion_media(scene_id);
-CREATE INDEX idx_type ON aimotion_media(type);
-CREATE INDEX idx_aimotion_media_status ON aimotion_media(status);
+-- Trigger to automatically update updated_at
+CREATE OR REPLACE FUNCTION update_aimotion_media_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_aimotion_media_updated_at
+    BEFORE UPDATE ON aimotion_media
+    FOR EACH ROW
+    EXECUTE FUNCTION update_aimotion_media_updated_at();
