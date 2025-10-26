@@ -77,6 +77,12 @@ func main() {
 		_ = fileStorage
 	}
 
+	log.Println("=== Service Initialization ===")
+	log.Printf("Supabase URL configured: %v", cfg.Supabase.URL != "")
+	log.Printf("Supabase API Key configured: %v", cfg.Supabase.APIKey != "")
+	log.Printf("Gemini client available: %v", geminiClient != nil)
+	log.Printf("Sora client available: %v", soraClient != nil)
+
 	if cfg.Supabase.URL != "" && cfg.Supabase.APIKey != "" {
 		supabaseCfg := &database.SupabaseConfig{
 			URL:    cfg.Supabase.URL,
@@ -85,10 +91,10 @@ func main() {
 
 		supabaseClient, err := database.NewSupabaseClient(supabaseCfg)
 		if err != nil {
-			log.Printf("Warning: Failed to connect to Supabase: %v", err)
+			log.Printf("ERROR: Failed to connect to Supabase: %v", err)
 			log.Println("Starting server without database connection...")
 		} else {
-			log.Println("Supabase connection established")
+			log.Println("✓ Supabase connection established")
 
 			novelRepo := supabase.NewNovelRepository(supabaseClient)
 			chapterRepo := supabase.NewChapterRepository(supabaseClient)
@@ -132,14 +138,22 @@ func main() {
 					geminiClient,
 				)
 				mangaWorkflowHandler = handler.NewMangaWorkflowHandler(mangaWorkflowService)
-				log.Println("Manga workflow service initialized")
+				log.Println("✓ Manga workflow service initialized")
 			} else {
-				log.Println("Gemini client not available, manga workflow disabled")
+				log.Println("✗ Manga workflow DISABLED: Gemini client not available")
 			}
 		}
 	} else {
-		log.Println("Supabase configuration not found, starting without database...")
+		log.Println("✗ Supabase configuration not found, starting without database...")
 	}
+
+	log.Println("=== Handler Status ===")
+	log.Printf("Novel Handler: %v", novelHandler != nil)
+	log.Printf("Character Handler: %v", characterHandler != nil)
+	log.Printf("Scene Handler: %v", sceneHandler != nil)
+	log.Printf("Generation Handler: %v", generationHandler != nil)
+	log.Printf("Manga Workflow Handler: %v", mangaWorkflowHandler != nil)
+	log.Println("=============================")
 
 	r := gin.New()
 

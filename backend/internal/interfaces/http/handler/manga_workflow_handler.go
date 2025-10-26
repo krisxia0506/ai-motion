@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -27,6 +28,10 @@ func (h *MangaWorkflowHandler) GenerateManga(c *gin.Context) {
 
 	// 1. 解析请求
 	if err := c.ShouldBindJSON(&req); err != nil {
+		slog.Error("Failed to bind request",
+			"error", err,
+			"path", c.Request.URL.Path,
+		)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    10001,
 			"message": "参数错误: " + err.Error(),
@@ -35,9 +40,17 @@ func (h *MangaWorkflowHandler) GenerateManga(c *gin.Context) {
 		return
 	}
 
+	slog.Info("Received manga generation request",
+		"title", req.Title,
+		"content_length", len(req.Content),
+	)
+
 	// 2. 获取当前用户ID
 	userID, exists := middleware.GetUserID(c)
 	if !exists {
+		slog.Warn("Unauthorized request - no user ID found",
+			"path", c.Request.URL.Path,
+		)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"code":    20001,
 			"message": "未授权",
@@ -46,9 +59,19 @@ func (h *MangaWorkflowHandler) GenerateManga(c *gin.Context) {
 		return
 	}
 
+	slog.Info("Creating manga task",
+		"user_id", userID,
+		"title", req.Title,
+	)
+
 	// 3. 创建任务
 	task, err := h.workflowService.CreateTask(c.Request.Context(), userID, &req)
 	if err != nil {
+		slog.Error("Failed to create task",
+			"error", err,
+			"user_id", userID,
+			"title", req.Title,
+		)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    50001,
 			"message": "创建任务失败: " + err.Error(),
@@ -56,6 +79,11 @@ func (h *MangaWorkflowHandler) GenerateManga(c *gin.Context) {
 		})
 		return
 	}
+
+	slog.Info("Task created successfully",
+		"task_id", task.ID,
+		"user_id", userID,
+	)
 
 	// 4. 异步执行任务
 	go h.workflowService.ExecuteTask(context.Background(), task.ID)

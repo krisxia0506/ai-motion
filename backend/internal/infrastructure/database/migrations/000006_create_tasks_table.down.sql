@@ -1,0 +1,4 @@
+-- PostgreSQL migration: Drop tasks table
+DROP TRIGGER IF EXISTS trigger_update_aimotion_task_updated_at ON aimotion_task;
+DROP FUNCTION IF EXISTS update_aimotion_task_updated_at();
+DROP TABLE IF EXISTS aimotion_task;

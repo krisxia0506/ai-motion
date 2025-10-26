@@ -27,5 +27,5 @@ COMMENT ON COLUMN aimotion_scene.gmt_create IS '创建时间';
 COMMENT ON COLUMN aimotion_scene.gmt_modified IS '修改时间';
 
 -- Indexes
-CREATE INDEX idx_novel_id ON aimotion_scene(novel_id);
+CREATE INDEX idx_aimotion_scene_novel_id ON aimotion_scene(novel_id);
 CREATE INDEX idx_chapter_id ON aimotion_scene(chapter_id);

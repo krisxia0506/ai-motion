@@ -26,4 +26,4 @@ COMMENT ON COLUMN aimotion_media.gmt_modified IS '修改时间';
 -- Indexes
 CREATE INDEX idx_scene_id ON aimotion_media(scene_id);
 CREATE INDEX idx_type ON aimotion_media(type);
-CREATE INDEX idx_status ON aimotion_media(status);
+CREATE INDEX idx_aimotion_media_status ON aimotion_media(status);
