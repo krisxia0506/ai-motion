@@ -52,12 +52,13 @@ AI-Motion 提供 RESTful API 接口,用于小说解析、角色管理、场景�
 ## 接口分类
 
 1. [系统健康检查](#1-系统健康检查)
-2. [小说管理](#2-小说管理)
-3. [角色管理](#3-角色管理)
-4. [场景管理](#4-场景管理)
-5. [提示词生成](#5-提示词生成)
-6. [内容生成](#6-内容生成)
-7. [漫画生成](#7-漫画生成)
+2. [用户认证](#2-用户认证)
+3. [小说管理](#3-小说管理)
+4. [角色管理](#4-角色管理)
+5. [场景管理](#5-场景管理)
+6. [提示词生成](#6-提示词生成)
+7. [内容生成](#7-内容生成)
+8. [漫画生成](#8-漫画生成)
 
 ---
 
@@ -84,9 +85,146 @@ curl http://localhost:8080/health
 
 ---
 
-## 2. 小说管理
+## 2. 用户认证
 
-### 2.1 POST /api/v1/novel/upload
+AI-Motion 使用 **Supabase Auth** 进行用户认证和授权管理。前端通过 Supabase JavaScript 客户端直接与 Supabase 认证服务通信。
+
+### 认证架构
+
+```
+前端 (React) → Supabase Auth API → Supabase PostgreSQL
+                ↓
+          JWT Token (localStorage)
+                ↓
+前端请求携带 Token → 后端 API (验证 JWT)
+```
+
+### 2.1 用户注册
+
+**实现方式**: 前端通过 Supabase Client SDK
+
+```typescript
+import { supabase } from '../lib/supabase';
+
+const { data, error } = await supabase.auth.signUp({
+  email: 'user@example.com',
+  password: 'password123',
+});
+```
+
+**注册流程**:
+1. 用户填写邮箱和密码
+2. 前端调用 `supabase.auth.signUp()`
+3. Supabase 发送验证邮件
+4. 用户点击邮件链接完成验证
+5. 自动登录并返回 JWT Token
+
+**前端实现位置**: `frontend/src/pages/RegisterPage.tsx`
+
+### 2.2 用户登录
+
+**实现方式**: 前端通过 Supabase Client SDK
+
+```typescript
+const { data, error } = await supabase.auth.signInWithPassword({
+  email: 'user@example.com',
+  password: 'password123',
+});
+```
+
+**登录流程**:
+1. 用户输入邮箱和密码
+2. 前端调用 `supabase.auth.signInWithPassword()`
+3. Supabase 验证凭据
+4. 返回 JWT Token 和用户信息
+5. Token 存储在 localStorage
+
+**前端实现位置**: `frontend/src/pages/LoginPage.tsx`
+
+### 2.3 用户登出
+
+```typescript
+const { error } = await supabase.auth.signOut();
+```
+
+### 2.4 获取当前用户
+
+```typescript
+const { data: { user } } = await supabase.auth.getUser();
+```
+
+### 2.5 Token 刷新
+
+Supabase SDK 自动处理 Token 刷新,无需手动实现。
+
+### 认证上下文
+
+前端使用 React Context 管理认证状态:
+
+```typescript
+// frontend/src/contexts/AuthContext.tsx
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // 监听认证状态变化
+  useEffect(() => {
+    supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+```
+
+### 路由保护
+
+使用 `ProtectedRoute` 组件保护需要认证的页面:
+
+```typescript
+// frontend/src/components/ProtectedRoute.tsx
+export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingSpinner />;
+  if (!user) return <Navigate to="/login" />;
+
+  return <>{children}</>;
+};
+```
+
+### 后端 JWT 验证 (未来实现)
+
+当后端需要验证用户身份时,可使用 Supabase JWT 验证中间件:
+
+```go
+// 未来实现示例
+func AuthMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        token := c.GetHeader("Authorization")
+        // 验证 Supabase JWT Token
+        // 解析用户信息
+        c.Next()
+    }
+}
+```
+
+**当前状态**: 
+- ✅ 前端认证已完整实现 (PR #42, #54)
+- ⏳ 后端 JWT 验证中间件待实现
+- ⏳ 受保护的 API 端点待添加认证要求
+
+---
+
+## 3. 小说管理
+
+### 3.1 POST /api/v1/novel/upload
 
 上传小说内容
 
@@ -152,7 +290,7 @@ curl -X POST \
 
 ---
 
-### 2.2 GET /api/v1/novel/:id
+### 3.2 GET /api/v1/novel/:id
 
 获取小说详细信息
 
@@ -193,7 +331,7 @@ curl http://localhost:8080/api/v1/novel/550e8400-e29b-41d4-a716-446655440000
 
 ---
 
-### 2.3 GET /api/v1/novel
+### 3.3 GET /api/v1/novel
 
 获取小说列表
 
@@ -238,7 +376,7 @@ curl "http://localhost:8080/api/v1/novel?offset=0&limit=20"
 
 ---
 
-### 2.4 DELETE /api/v1/novel/:id
+### 3.4 DELETE /api/v1/novel/:id
 
 删除小说及关联数据
 
@@ -263,7 +401,7 @@ curl -X DELETE http://localhost:8080/api/v1/novel/550e8400-e29b-41d4-a716-446655
 
 ---
 
-### 2.5 GET /api/v1/novel/:id/chapters
+### 3.5 GET /api/v1/novel/:id/chapters
 
 获取小说的所有章节
 
@@ -303,9 +441,9 @@ curl http://localhost:8080/api/v1/novel/550e8400-e29b-41d4-a716-446655440000/cha
 
 ---
 
-## 3. 角色管理
+## 4. 角色管理
 
-### 3.1 POST /api/v1/characters/novel/:novel_id/extract
+### 4.1 POST /api/v1/characters/novel/:novel_id/extract
 
 从小说中提取角色信息
 
@@ -347,7 +485,7 @@ curl -X POST \
 
 ---
 
-### 3.2 GET /api/v1/characters/:id
+### 4.2 GET /api/v1/characters/:id
 
 获取单个角色详情
 
@@ -378,7 +516,7 @@ curl http://localhost:8080/api/v1/characters/char_001
 
 ---
 
-### 3.3 GET /api/v1/characters/novel/:novel_id
+### 4.3 GET /api/v1/characters/novel/:novel_id
 
 获取小说的所有角色
 
@@ -416,7 +554,7 @@ curl http://localhost:8080/api/v1/characters/novel/550e8400-e29b-41d4-a716-44665
 
 ---
 
-### 3.4 PUT /api/v1/characters/:id
+### 4.4 PUT /api/v1/characters/:id
 
 更新角色信息
 
@@ -447,7 +585,7 @@ curl http://localhost:8080/api/v1/characters/novel/550e8400-e29b-41d4-a716-44665
 
 ---
 
-### 3.5 DELETE /api/v1/characters/:id
+### 4.5 DELETE /api/v1/characters/:id
 
 删除角色
 
@@ -465,7 +603,7 @@ curl http://localhost:8080/api/v1/characters/novel/550e8400-e29b-41d4-a716-44665
 
 ---
 
-### 3.6 POST /api/v1/characters/merge
+### 4.6 POST /api/v1/characters/merge
 
 合并重复的角色
 
@@ -494,9 +632,9 @@ curl http://localhost:8080/api/v1/characters/novel/550e8400-e29b-41d4-a716-44665
 
 ---
 
-## 4. 场景管理
+## 5. 场景管理
 
-### 4.1 POST /api/v1/scenes/chapter/:chapter_id/divide
+### 5.1 POST /api/v1/scenes/chapter/:chapter_id/divide
 
 将章节划分为场景
 
@@ -539,7 +677,7 @@ curl -X POST \
 
 ---
 
-### 4.2 GET /api/v1/scenes/:id
+### 5.2 GET /api/v1/scenes/:id
 
 获取场景详情
 
@@ -577,7 +715,7 @@ curl http://localhost:8080/api/v1/scenes/scene_001
 
 ---
 
-### 4.3 GET /api/v1/scenes/chapter/:chapter_id
+### 5.3 GET /api/v1/scenes/chapter/:chapter_id
 
 获取章节的所有场景
 
@@ -615,7 +753,7 @@ curl http://localhost:8080/api/v1/scenes/chapter/chapter_001
 
 ---
 
-### 4.4 GET /api/v1/scenes/novel/:novel_id
+### 5.4 GET /api/v1/scenes/novel/:novel_id
 
 获取小说的所有场景
 
@@ -660,7 +798,7 @@ curl "http://localhost:8080/api/v1/scenes/novel/550e8400-e29b-41d4-a716-44665544
 
 ---
 
-### 4.5 DELETE /api/v1/scenes/:id
+### 5.5 DELETE /api/v1/scenes/:id
 
 删除场景
 
@@ -678,9 +816,9 @@ curl "http://localhost:8080/api/v1/scenes/novel/550e8400-e29b-41d4-a716-44665544
 
 ---
 
-## 5. 提示词生成
+## 6. 提示词生成
 
-### 5.1 POST /api/v1/prompts/generate
+### 6.1 POST /api/v1/prompts/generate
 
 为场景生成 AI 提示词
 
@@ -728,7 +866,7 @@ curl -X POST \
 
 ---
 
-### 5.2 POST /api/v1/prompts/generate/batch
+### 6.2 POST /api/v1/prompts/generate/batch
 
 批量生成场景提示词
 
@@ -762,9 +900,9 @@ curl -X POST \
 
 ---
 
-## 6. 内容生成
+## 7. 内容生成
 
-### 6.1 POST /api/v1/generate/image
+### 7.1 POST /api/v1/generate/image
 
 生成场景图片
 
@@ -820,7 +958,7 @@ curl -X POST \
 
 ---
 
-### 6.2 POST /api/v1/generate/video
+### 7.2 POST /api/v1/generate/video
 
 生成场景视频
 
@@ -862,7 +1000,7 @@ curl -X POST \
 
 ---
 
-### 6.3 POST /api/v1/generate/batch
+### 7.3 POST /api/v1/generate/batch
 
 批量生成场景内容
 
@@ -919,7 +1057,7 @@ curl -X POST \
 
 ---
 
-### 6.4 GET /api/v1/generate/status/:scene_id
+### 7.4 GET /api/v1/generate/status/:scene_id
 
 查询场景生成状态
 
@@ -954,9 +1092,9 @@ curl http://localhost:8080/api/v1/generate/status/scene_001
 
 ---
 
-## 7. 漫画生成
+## 8. 漫画生成
 
-### 7.1 POST /api/v1/manga/generate
+### 8.1 POST /api/v1/manga/generate
 
 一键生成漫画 (端到端流程)
 
@@ -1096,13 +1234,13 @@ type PaginationInfo struct {
 | 功能模块 | 状态 | 说明 |
 |---------|------|------|
 | 系统健康检查 | ✅ 已实现 | 基础健康检查 |
+| 用户认证 | 🔄 部分实现 | 前端 Supabase Auth 已完成 (PR #42, #54)，后端 JWT 验证待实现 |
 | 小说管理 | ✅ 已实现 | 上传、查询、删除、章节列表 |
 | 角色管理 | ✅ 已实现 | 提取、查询、更新、删除、合并 |
 | 场景管理 | ✅ 已实现 | 划分、查询、删除 |
 | 提示词生成 | ✅ 已实现 | 单个和批量生成 |
 | 内容生成 | ✅ 已实现 | 图片、视频、批量生成、状态查询 |
-| 漫画生成 | ✅ 已实现 | 端到端自动化生成流程 |
-| 用户认证 | ⏳ 待实现 | JWT 认证、注册、登录 |
+| 漫画生成 | ✅ 已实现 | 端到端自动化生成流程 (PR #49) |
 | 项目管理 | ⏳ 待实现 | 项目创建、管理 |
 | 导出功能 | ⏳ 待实现 | 视频导出、素材打包 |
 
