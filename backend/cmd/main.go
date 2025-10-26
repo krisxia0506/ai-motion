@@ -30,6 +30,7 @@ func main() {
 	var characterHandler *handler.CharacterHandler
 	var sceneHandler *handler.SceneHandler
 	var generationHandler *handler.GenerationHandler
+	var mangaWorkflowHandler *handler.MangaWorkflowHandler
 
 	geminiBaseURL := os.Getenv("GEMINI_BASE_URL")
 	geminiAPIKey := os.Getenv("GEMINI_API_KEY")
@@ -114,6 +115,24 @@ func main() {
 			} else {
 				log.Println("AI clients not available, generation service disabled")
 			}
+
+			if geminiClient != nil {
+				mangaWorkflowService := service.NewMangaWorkflowService(
+					novelRepo,
+					chapterRepo,
+					characterRepo,
+					sceneRepo,
+					mediaRepo,
+					parserService,
+					extractorService,
+					dividerService,
+					geminiClient,
+				)
+				mangaWorkflowHandler = handler.NewMangaWorkflowHandler(mangaWorkflowService)
+				log.Println("Manga workflow service initialized")
+			} else {
+				log.Println("Gemini client not available, manga workflow disabled")
+			}
 		}
 	} else {
 		log.Println("Supabase configuration not found, starting without database...")
@@ -195,6 +214,19 @@ func main() {
 			v1.POST("/generate/image", func(c *gin.Context) {
 				c.JSON(http.StatusServiceUnavailable, gin.H{
 					"error": "AI services not configured",
+				})
+			})
+		}
+
+		if mangaWorkflowHandler != nil {
+			mangaGroup := v1.Group("/manga")
+			{
+				mangaGroup.POST("/generate", mangaWorkflowHandler.GenerateManga)
+			}
+		} else {
+			v1.POST("/manga/generate", func(c *gin.Context) {
+				c.JSON(http.StatusServiceUnavailable, gin.H{
+					"error": "Manga workflow service not configured",
 				})
 			})
 		}

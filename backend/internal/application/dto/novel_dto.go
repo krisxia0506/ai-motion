@@ -33,3 +33,18 @@ type ChapterResponse struct {
 	WordCount     int       `json:"word_count"`
 	CreatedAt     time.Time `json:"created_at"`
 }
+
+type GenerateMangaRequest struct {
+	Title   string `json:"title" binding:"required"`
+	Author  string `json:"author" binding:"required"`
+	Content string `json:"content" binding:"required"`
+}
+
+type MangaWorkflowResponse struct {
+	NovelID        string `json:"novel_id"`
+	Title          string `json:"title"`
+	CharacterCount int    `json:"character_count"`
+	SceneCount     int    `json:"scene_count"`
+	Status         string `json:"status"`
+	Message        string `json:"message"`
+}
