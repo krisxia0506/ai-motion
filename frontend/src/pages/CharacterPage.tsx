@@ -4,7 +4,7 @@ import { MdAdd, MdPerson } from 'react-icons/md';
 import { useCharacters } from '../hooks/useCharacters';
 import { useCharacterStore } from '../store';
 import { characterApi } from '../services';
-import type { Character, CreateCharacterRequest, UpdateCharacterRequest } from '../types';
+import type { Character, CreateCharacterRequest, UpdateCharacterRequest, GenerateReferenceRequest, ReferenceImage } from '../types';
 import { CharacterList } from '../components/features/character';
 import { Modal } from '../components/common/Modal';
 import { Button } from '../components/common/Button';
@@ -109,7 +109,7 @@ function CharacterPage() {
     setShowReferenceGenerator(true);
   };
 
-  const handleReferenceGenerated = async (request: any): Promise<any> => {
+  const handleReferenceGenerated = async (request: GenerateReferenceRequest): Promise<ReferenceImage> => {
     const response = await characterApi.generateReferenceImage(request);
     setShowReferenceGenerator(false);
     setCharacterForReference(null);

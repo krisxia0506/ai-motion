@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Novel, ApiError, ListQueryParams, Pagination } from '../types';
 import { novelApi } from '../services';
 import { useNovelStore } from '../store';
@@ -17,7 +17,7 @@ export const useNovels = (params?: ListQueryParams): UseNovelsResult => {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const { novels, setNovels, setError: setStoreError } = useNovelStore();
 
-  const fetchNovels = async () => {
+  const fetchNovels = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -31,11 +31,11 @@ export const useNovels = (params?: ListQueryParams): UseNovelsResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params, setNovels, setStoreError]);
 
   useEffect(() => {
     fetchNovels();
-  }, [params?.page, params?.pageSize, params?.search, params?.sortBy]);
+  }, [fetchNovels]);
 
   return {
     novels,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Character, ApiError } from '../types';
 import { characterApi } from '../services';
 import { useCharacterStore } from '../store';
@@ -15,7 +15,7 @@ export const useCharacters = (novelId: string): UseCharactersResult => {
   const [error, setError] = useState<ApiError | null>(null);
   const { characters, setCharacters, setError: setStoreError } = useCharacterStore();
 
-  const fetchCharacters = async () => {
+  const fetchCharacters = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -28,13 +28,13 @@ export const useCharacters = (novelId: string): UseCharactersResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [novelId, setCharacters, setStoreError]);
 
   useEffect(() => {
     if (novelId) {
       fetchCharacters();
     }
-  }, [novelId]);
+  }, [novelId, fetchCharacters]);
 
   return {
     characters: characters.filter((c: Character) => c.novelId === novelId),

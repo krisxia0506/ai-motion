@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Novel, ApiError } from '../types';
 import { novelApi } from '../services';
 import { useNovelStore } from '../store';
@@ -15,7 +15,7 @@ export const useNovel = (id: string): UseNovelResult => {
   const [error, setError] = useState<ApiError | null>(null);
   const { selectedNovel, setSelectedNovel, setError: setStoreError } = useNovelStore();
 
-  const fetchNovel = async () => {
+  const fetchNovel = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -28,13 +28,13 @@ export const useNovel = (id: string): UseNovelResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, setSelectedNovel, setStoreError]);
 
   useEffect(() => {
     if (id) {
       fetchNovel();
     }
-  }, [id]);
+  }, [id, fetchNovel]);
 
   return {
     novel: selectedNovel,

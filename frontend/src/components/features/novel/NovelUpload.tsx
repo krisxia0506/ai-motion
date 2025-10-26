@@ -36,7 +36,7 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
     return null;
   };
 
-  const handleFileSelect = (selectedFile: File) => {
+  const handleFileSelect = useCallback((selectedFile: File) => {
     const validationError = validateFile(selectedFile);
     if (validationError) {
       setError(validationError);
@@ -48,7 +48,7 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
     if (!title) {
       setTitle(selectedFile.name.replace(/\.[^/.]+$/, ''));
     }
-  };
+  }, [title]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -68,7 +68,7 @@ export const NovelUpload: React.FC<NovelUploadProps> = ({
     if (droppedFile) {
       handleFileSelect(droppedFile);
     }
-  }, []);
+  }, [handleFileSelect]);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];

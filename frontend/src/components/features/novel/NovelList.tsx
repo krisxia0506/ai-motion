@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, LoadingSpinner, ErrorMessage, EmptyState, Select } from '../../common';
 import type { Novel, NovelStatus } from '../../../types';
 import './NovelList.css';
@@ -19,11 +19,7 @@ export const NovelList: React.FC<NovelListProps> = ({ onNovelSelect }) => {
 
   const pageSize = 12;
 
-  useEffect(() => {
-    fetchNovels();
-  }, [page, statusFilter, sortBy, searchQuery]);
-
-  const fetchNovels = async () => {
+  const fetchNovels = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -49,7 +45,11 @@ export const NovelList: React.FC<NovelListProps> = ({ onNovelSelect }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter, sortBy, searchQuery]);
+
+  useEffect(() => {
+    fetchNovels();
+  }, [fetchNovels]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
