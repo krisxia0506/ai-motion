@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { MdMenu, MdClose, MdHome, MdLibraryBooks, MdPerson, MdMovie, MdFileDownload, MdLogout, MdAccountCircle } from 'react-icons/md';
+import { MdMenu, MdClose, MdHome, MdList, MdLogout, MdAccountCircle, MdMovie } from 'react-icons/md';
 import { FloatingAvatar } from './common/FloatingAvatar';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
@@ -14,15 +14,16 @@ export const Layout: React.FC = () => {
 
   const navItems = [
     { path: '/', label: '首页', icon: <MdHome size={20} /> },
-    { path: '/novels', label: '小说列表', icon: <MdLibraryBooks size={20} /> },
-    { path: '/characters', label: '角色管理', icon: <MdPerson size={20} /> },
-    { path: '/generation', label: '生成动漫', icon: <MdMovie size={20} /> },
-    { path: '/export', label: '导出视频', icon: <MdFileDownload size={20} /> },
+    { path: '/tasks', label: '任务列表', icon: <MdList size={20} /> },
   ];
 
   const isActivePath = (path: string) => {
     if (path === '/') {
       return location.pathname === '/';
+    }
+    // 任务详情页也应该高亮任务列表
+    if (path === '/tasks' && location.pathname.startsWith('/task')) {
+      return true;
     }
     return location.pathname.startsWith(path);
   };

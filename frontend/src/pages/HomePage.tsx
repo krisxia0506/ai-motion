@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdUploadFile, MdAutoAwesome, MdPerson, MdMovie, MdVolumeUp, MdEdit } from 'react-icons/md';
 import { Button, Card, CardBody } from '../components/common';
-import { apiClient } from '../services/api';
+import { taskApi } from '../services/taskApi';
 import './HomePage.css';
 
 type InputMode = 'file' | 'text';
 
 function HomePage() {
-  const [inputMode, setInputMode] = useState<InputMode>('file');
+  const [inputMode, setInputMode] = useState<InputMode>('text');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState('');
   const [title, setTitle] = useState('');
@@ -67,13 +67,14 @@ function HomePage() {
         content = textContent;
       }
 
-      const response = await apiClient.post<{ novel_id: string }>('/manga/generate', {
+      const response = await taskApi.createTask({
         title,
-        author: author || 'Unknown',
+        author: author || undefined,
         content,
       });
 
-      navigate(`/novels/${response.data.novel_id}`);
+      // 跳转到任务详情页
+      navigate(`/task/${response.data.task_id}`);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('生成失败');
       setError(error.message);
@@ -131,15 +132,6 @@ function HomePage() {
               <div className="mode-switcher">
                 <button
                   type="button"
-                  className={`mode-btn ${inputMode === 'file' ? 'active' : ''}`}
-                  onClick={() => setInputMode('file')}
-                  disabled={uploading}
-                >
-                  <MdUploadFile size={20} />
-                  <span>上传文件</span>
-                </button>
-                <button
-                  type="button"
                   className={`mode-btn ${inputMode === 'text' ? 'active' : ''}`}
                   onClick={() => setInputMode('text')}
                   disabled={uploading}
@@ -147,7 +139,30 @@ function HomePage() {
                   <MdEdit size={20} />
                   <span>输入文本</span>
                 </button>
+                <button
+                  type="button"
+                  className={`mode-btn ${inputMode === 'file' ? 'active' : ''}`}
+                  onClick={() => setInputMode('file')}
+                  disabled={uploading}
+                >
+                  <MdUploadFile size={20} />
+                  <span>上传文件</span>
+                </button>
               </div>
+
+              {/* Text Input Mode */}
+              {inputMode === 'text' && (
+                <div className="text-input-area">
+                  <textarea
+                    value={textContent}
+                    onChange={(e) => setTextContent(e.target.value)}
+                    placeholder="在此粘贴或输入小说内容..."
+                    disabled={uploading}
+                    className="text-input"
+                    rows={6}
+                  />
+                </div>
+              )}
 
               {/* File Upload Mode */}
               {inputMode === 'file' && (
@@ -176,20 +191,6 @@ function HomePage() {
                       </div>
                     )}
                   </label>
-                </div>
-              )}
-
-              {/* Text Input Mode */}
-              {inputMode === 'text' && (
-                <div className="text-input-area">
-                  <textarea
-                    value={textContent}
-                    onChange={(e) => setTextContent(e.target.value)}
-                    placeholder="在此粘贴或输入小说内容..."
-                    disabled={uploading}
-                    className="text-input"
-                    rows={6}
-                  />
                 </div>
               )}
 
