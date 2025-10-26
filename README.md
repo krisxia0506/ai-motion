@@ -22,6 +22,7 @@ AI-Motion 是一个创新的自动化动漫生成平台，能够将文字小说�
 - **前端**: React 19 + TypeScript | Vite 7 | Tailwind CSS
 - **AI 服务**: Gemini 2.5 Flash Image (文生图/图生图) | Sora2 (视频生成)
 - **DevOps**: Docker + Docker Compose
+- **设计系统**: 主题色 #2FB2F1 (青蓝色) | 现代化渐变设计
 
 ---
 

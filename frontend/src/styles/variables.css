@@ -1,7 +1,7 @@
 :root {
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-primary-light: #eef2ff;
+  --color-primary: #2FB2F1;
+  --color-primary-hover: #1E9DD8;
+  --color-primary-light: #E0F7FF;
   --color-secondary: #10b981;
   --color-secondary-hover: #059669;
   --color-danger: #ef4444;
@@ -23,7 +23,7 @@
   --color-border: #e5e7eb;
   --color-border-light: #f3f4f6;
   --color-border-dark: #d1d5db;
-  --color-border-focus: #6366f1;
+  --color-border-focus: #2FB2F1;
   
   --color-success: #10b981;
   --color-success-light: #d1fae5;
