@@ -13,7 +13,7 @@ AI-Motion is an intelligent anime generation system that converts text novels in
 - Backend: Go 1.24+ with Gin framework, DDD architecture
 - Frontend: React 19 + TypeScript with Vite 7
 - AI Services: Gemini 2.5 Flash Image, Sora2
-- Database: MySQL 8.0+
+- Database: Supabase (PostgreSQL + PostgREST)
 - DevOps: Docker + Docker Compose
 
 ## Repository Structure

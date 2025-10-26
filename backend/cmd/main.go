@@ -14,7 +14,7 @@ import (
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/ai/sora"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/config"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/database"
-	"github.com/xiajiayi/ai-motion/internal/infrastructure/repository/mysql"
+	"github.com/xiajiayi/ai-motion/internal/infrastructure/repository/supabase"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/storage/local"
 	"github.com/xiajiayi/ai-motion/internal/interfaces/http/handler"
 	"github.com/xiajiayi/ai-motion/internal/interfaces/http/middleware"
@@ -75,39 +75,24 @@ func main() {
 		_ = fileStorage
 	}
 
-	if cfg.Database.Host != "" && cfg.Database.Password != "" {
-		dbCfg := &database.Config{
-			Host:     cfg.Database.Host,
-			Port:     cfg.Database.Port,
-			User:     cfg.Database.User,
-			Password: cfg.Database.Password,
-			Database: cfg.Database.Database,
+	if cfg.Supabase.URL != "" && cfg.Supabase.APIKey != "" {
+		supabaseCfg := &database.SupabaseConfig{
+			URL:    cfg.Supabase.URL,
+			APIKey: cfg.Supabase.APIKey,
 		}
 
-		dbConn, err := database.NewMySQLConnection(dbCfg)
+		supabaseClient, err := database.NewSupabaseClient(supabaseCfg)
 		if err != nil {
-			log.Printf("Warning: Failed to connect to database: %v", err)
+			log.Printf("Warning: Failed to connect to Supabase: %v", err)
 			log.Println("Starting server without database connection...")
 		} else {
-			defer database.CloseMySQLConnection(dbConn)
-			log.Println("Database connection established")
+			log.Println("Supabase connection established")
 
-			migrationsPath := os.Getenv("MIGRATIONS_PATH")
-			if migrationsPath == "" {
-				migrationsPath = "./internal/infrastructure/database/migrations"
-			}
-
-			if err := database.RunMigrations(dbConn, migrationsPath); err != nil {
-				log.Printf("Warning: Failed to run migrations: %v", err)
-			} else {
-				log.Println("Database migrations completed")
-			}
-
-			novelRepo := mysql.NewNovelRepository(dbConn)
-			chapterRepo := mysql.NewChapterRepository(dbConn)
-			characterRepo := mysql.NewMySQLCharacterRepository(dbConn)
-			sceneRepo := mysql.NewMySQLSceneRepository(dbConn)
-			mediaRepo := mysql.NewMediaRepository(dbConn)
+			novelRepo := supabase.NewNovelRepository(supabaseClient)
+			chapterRepo := supabase.NewChapterRepository(supabaseClient)
+			characterRepo := supabase.NewCharacterRepository(supabaseClient)
+			sceneRepo := supabase.NewSceneRepository(supabaseClient)
+			mediaRepo := supabase.NewMediaRepository(supabaseClient)
 
 			parserService := novel.NewParserService()
 			novelService := service.NewNovelService(novelRepo, chapterRepo, parserService)
@@ -131,7 +116,7 @@ func main() {
 			}
 		}
 	} else {
-		log.Println("Database configuration not found, starting without database...")
+		log.Println("Supabase configuration not found, starting without database...")
 	}
 
 	r := gin.New()
