@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { AuthContextValue } from '../types/auth';
+import type { AuthContextValue } from '../types/auth';
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 

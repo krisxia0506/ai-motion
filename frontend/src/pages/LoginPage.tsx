@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../contexts/AuthContext';
-import { LoginFormData } from '../types/auth';
+import type { LoginFormData } from '../types/auth';
 import { loginSchema } from '../lib/validations/auth';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
