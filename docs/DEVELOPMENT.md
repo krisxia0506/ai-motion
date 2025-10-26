@@ -267,6 +267,58 @@ func ParseNovel(file io.Reader) (*Novel, error) {
 }
 ```
 
+**HTTP 响应规范**:
+
+从 `v0.1.0-alpha` 开始,所有 HTTP Handler 必须使用统一的响应助手函数,位于 `backend/internal/interfaces/http/response` 包。
+
+```go
+import "github.com/xiajiayi/ai-motion/internal/interfaces/http/response"
+
+// ✅ 正确: 使用响应助手
+func (h *NovelHandler) Upload(c *gin.Context) {
+    var req dto.UploadNovelRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        response.InvalidParams(c, "Invalid request: "+err.Error())
+        return
+    }
+    
+    novel, err := h.novelService.Upload(c.Request.Context(), &req)
+    if err != nil {
+        response.InternalError(c, "Failed to upload: "+err.Error())
+        return
+    }
+    
+    response.Success(c, novel)
+}
+
+// ❌ 错误: 手动创建响应
+func (h *NovelHandler) Upload(c *gin.Context) {
+    c.JSON(http.StatusOK, gin.H{
+        "data": novel,  // 缺少 code 和 message 字段
+    })
+}
+```
+
+**可用的响应助手**:
+- `response.Success(c, data)` - 成功响应
+- `response.SuccessWithMessage(c, message, data)` - 自定义成功消息
+- `response.SuccessList(c, items, page, pageSize, total)` - 分页列表
+- `response.InvalidParams(c, message)` - 参数错误 (10001)
+- `response.ResourceNotFound(c, message)` - 资源不存在 (10002)
+- `response.AIServiceError(c, message)` - AI 服务错误 (40001)
+- `response.InternalError(c, message)` - 内部错误 (50002)
+
+所有响应遵循统一格式:
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {}
+}
+```
+
+详细说明请参考 [backend/CLAUDE.md](../backend/CLAUDE.md#unified-response-helpers) 和 [API 设计规范](./API_DESIGN_GUIDELINES.md)。
+
 ### TypeScript/React 代码规范
 
 遵循 [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript) 和 [React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/)。
