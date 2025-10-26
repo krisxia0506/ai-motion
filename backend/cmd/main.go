@@ -14,6 +14,7 @@ import (
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/ai/sora"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/config"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/database"
+	infra_middleware "github.com/xiajiayi/ai-motion/internal/infrastructure/middleware"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/repository/supabase"
 	"github.com/xiajiayi/ai-motion/internal/infrastructure/storage/local"
 	"github.com/xiajiayi/ai-motion/internal/interfaces/http/handler"
@@ -94,6 +95,7 @@ func main() {
 			characterRepo := supabase.NewCharacterRepository(supabaseClient)
 			sceneRepo := supabase.NewSceneRepository(supabaseClient)
 			mediaRepo := supabase.NewMediaRepository(supabaseClient)
+			taskRepo := supabase.NewTaskRepository(supabaseClient)
 
 			parserService := novel.NewParserService()
 			novelService := service.NewNovelService(novelRepo, chapterRepo, parserService)
@@ -118,6 +120,7 @@ func main() {
 
 			if geminiClient != nil {
 				mangaWorkflowService := service.NewMangaWorkflowService(
+					taskRepo,
 					novelRepo,
 					chapterRepo,
 					characterRepo,
@@ -146,6 +149,15 @@ func main() {
 	r.Use(middleware.CORS())
 	r.Use(middleware.ErrorHandler())
 	r.Use(rateLimiter.Middleware())
+
+	// 初始化认证中间件
+	var authMiddleware *infra_middleware.AuthMiddleware
+	if cfg.Supabase.JWTSecret != "" {
+		authMiddleware = infra_middleware.NewAuthMiddleware(cfg.Supabase.JWTSecret)
+		log.Println("JWT authentication middleware initialized")
+	} else {
+		log.Println("Warning: SUPABASE_JWT_SECRET not configured, authentication disabled")
+	}
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -220,8 +232,14 @@ func main() {
 
 		if mangaWorkflowHandler != nil {
 			mangaGroup := v1.Group("/manga")
+			if authMiddleware != nil {
+				mangaGroup.Use(authMiddleware.SupabaseAuth()) // 应用认证中间件
+			}
 			{
 				mangaGroup.POST("/generate", mangaWorkflowHandler.GenerateManga)
+				mangaGroup.GET("/task/:task_id", mangaWorkflowHandler.GetTaskStatus)
+				mangaGroup.GET("/tasks", mangaWorkflowHandler.GetTaskList)
+				mangaGroup.POST("/task/:task_id/cancel", mangaWorkflowHandler.CancelTask)
 			}
 		} else {
 			v1.POST("/manga/generate", func(c *gin.Context) {
